@@ -12,13 +12,6 @@ export default new Router({
       name: 'home',
       component: Home
     },
-
-    {
-      path: '/bmv',
-      name: 'bmv',
-      component: () => import('./views/Bmv.vue'),
-      beforeEnter: AuthGuard
-    },
     {
       path: '/profile',
       name: 'profile',

@@ -71,12 +71,6 @@ export default {
         menuItems() {
             return [
                 {
-                    icon: "event",
-                    title: "BMV",
-                    route: "/bmv",
-                    isAuth: true
-                },
-                {
                     icon: "account_circle",
                     title: "Профиль",
                     route: "/profile",
