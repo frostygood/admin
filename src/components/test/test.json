@@ -1,0 +1,40 @@
+{ 
+    "strings": {
+        "cont1234": "тюп-тюп",
+        "cont4321": "<p>testa</p>",
+        "cont5678": "оп, давай-давай",
+        "cont9876": "<p>ywerc</p>"
+    },
+    "obj": [
+        {
+            "name": "cont",
+            "edit": false,
+            "props": {
+                "boolean": {
+                    "bool": false
+                },
+                "string": { 
+                    "str": "cont1234"
+                },
+                "editor": {
+                    "texts": "cont4321"
+                }
+            }
+        },
+        {
+            "name": "cont",
+            "edit": false,
+            "props": {
+                "boolean": {
+                        "bool": true
+                    },
+                "string": { 
+                        "str": "cont5678"
+                    },
+                "editor": {
+                        "texts": "cont9876"
+                    }
+                }
+        }
+    ]
+}

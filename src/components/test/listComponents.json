@@ -1,0 +1,14 @@
+{
+    "name": "cont",
+    "props": {
+        "boolean": {
+            "bool": false
+        },
+        "string": { 
+            "str": "id"
+        },
+        "editor": {
+            "texts": "id"
+        }
+    }
+}

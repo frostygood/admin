@@ -133,7 +133,6 @@
       </div>
     </editor-menu-bar>
     <editor-content class="editor__content" :editor="editor" />
-    <v-btn style="margin-left: auto; margin-right: 0; display: block;" @click="dataSend()">Save</v-btn>
   </div>
 </template>
 
@@ -166,6 +165,10 @@ export default {
     EditorMenuBubble,
     EditorMenuBar,
     Icon,
+  },
+  model: {
+      prop: 'intext',
+      event: 'reverse'
   },
   props: {
     intext: {
@@ -229,17 +232,18 @@ export default {
       if (src !== null) {
         command({ src })
       }
-    },
-    dataSend () {
-      this.$emit('outtext', {
-        textout: this.editor.getHTML()
-      })
     }
   },
   beforeDestroy() {
     this.editor.destroy()
   },
+  watch: {
+      html: function () {
+        this.$emit('reverse', this.html)
+      },
+  },
 }
+
 </script>
 
 <style lang="scss">
@@ -276,8 +280,8 @@ export default {
 .menubar {
   border: 1px solid lightgray;
   padding: 5px;
-  margin-bottom: 10px;
-  background: white;
+  margin-bottom: 0;
+  background: lightgrey;;
 }
 .editor {
   position: relative;

@@ -21,9 +21,12 @@ export default {
       this.mapProps();
   },
   watch: {
-      obj: function () {
-          this.mapProps();
-      }
+      obj: {
+        handler: function () { 
+            this.mapProps();
+        },
+        deep: true
+    },
   },
   methods: {
       mapProps() {
