@@ -5,7 +5,7 @@
       class="">
       <wrapper :strings='strings' :obj='item'/>
       <div style="display: flex">
-        <v-btn small dark color="green" @click.prevent="$set(obj[i], 'edit', true)">Edit</v-btn>
+        <v-btn small dark color="green" @click.prevent="obj[i].edit = true">Edit</v-btn>
         <v-btn small color="error" @click.prevent='deleteComponent(i)'>Delete</v-btn>
       </div>
 
@@ -70,7 +70,7 @@ export default {
     },
     addComponent(nameComponent, listComponents, strings) {
       let idComponent = nameComponent + Date.now()
-      let addingComponent = listComponents.find(item => item.name === nameComponent)
+      let addingComponent = JSON.parse(JSON.stringify(listComponents.find(item => item.name === nameComponent)))
       addingComponent['id'] = idComponent
       for (let key in addingComponent.props.string) {
         addingComponent.props.string[key] = idComponent + '_string_' + key
