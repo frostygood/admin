@@ -5,7 +5,7 @@
       app
     >
       <v-spacer />
-      Smartcat &copy; {{ new Date().getFullYear() }}
+      Vinkovatov &copy; {{ new Date().getFullYear() }}
       <v-spacer />
     </v-footer>
   </div>

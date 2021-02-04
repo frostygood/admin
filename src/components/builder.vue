@@ -5,9 +5,10 @@
       class="">
       <wrapper :strings='strings' :obj='item'/>
       <div style="display: flex">
-        <v-btn small dark color="green" @click.prevent='obj[i].edit = true'>Edit</v-btn>
+        <v-btn small dark color="green" @click.prevent="$set(obj[i], 'edit', true)">Edit</v-btn>
         <v-btn small color="error" @click.prevent='deleteComponent(i)'>Delete</v-btn>
       </div>
+
       <v-dialog
         v-model="obj[i].edit"
         persistent max-width="900px" scrollable>
@@ -32,17 +33,25 @@
         </v-card>
       </v-dialog>
     </div>
+    <v-btn 
+      @click.prevent="addComponent('cont', listComponents, strings)"
+      fab dark color="indigo" 
+      style="display: block; margin: 0 auto;">
+      <v-icon dark>add</v-icon>
+    </v-btn>
   </div>
 </template>
 
 
 <script>
 import testdata from '@/components/test/test.json'
+import testcomponent from '@/components/test/listComponents.json'
 import wrapper from '@/components/wrapperComponent.vue'
 import editor from '@/components/editor.vue'
 export default {
   data: function () {
       return { 
+        listComponents: [],
         strings: {},
         obj: [],
       }
@@ -50,6 +59,7 @@ export default {
   created() {
     this.strings = testdata.strings
     this.obj = testdata.obj
+    this.listComponents = testcomponent
   },
   methods: {
     closePopup(i) {
@@ -57,6 +67,21 @@ export default {
     },
     deleteComponent(i) {
       this.obj.splice(i, 1);
+    },
+    addComponent(nameComponent, listComponents, strings) {
+      let idComponent = nameComponent + Date.now()
+      let addingComponent = listComponents.find(item => item.name === nameComponent)
+      addingComponent['id'] = idComponent
+      for (let key in addingComponent.props.string) {
+        addingComponent.props.string[key] = idComponent + '_string_' + key
+        strings[idComponent + '_string_' + key] = 'default'
+      }
+      for (let key in addingComponent.props.editor) {
+        addingComponent.props.editor[key] = idComponent + '_editor_' + key
+        strings[idComponent + '_editor_' + key] = 'default'
+      }
+      this.obj.push(addingComponent)
+      console.log(this.obj)
     }
   },
   components: {
