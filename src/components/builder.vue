@@ -5,13 +5,15 @@
       class="">
       <wrapper :strings='strings' :obj='item'/>
       <div style="display: flex">
-        <v-btn small dark color="green" @click.prevent="obj[i].edit = true">Edit</v-btn>
+        <v-btn small dark color="orange" @click.prevent="addComponent(i, createComponent('cont'))">add new block below</v-btn>
+        <v-btn style="margin-right: auto;" small dark color="green" @click.prevent="obj[i].edit = true">Edit</v-btn>
+        <v-btn v-show="i > 0" small dark color="blue" @click.prevent="switchComponents(i-1, i)">up</v-btn>
+        <v-btn v-show="obj.length-1 > i" small dark color="blue" @click.prevent="switchComponents(i, i+1)">down</v-btn>
         <v-btn small color="error" @click.prevent='deleteComponent(i)'>Delete</v-btn>
       </div>
 
       <v-dialog
-        v-model="obj[i].edit"
-        persistent max-width="900px" scrollable>
+        v-model="obj[i].edit" max-width="900px" scrollable>
         <v-card tile>
           <v-toolbar card dark color="primary"><v-btn icon dark @click="obj[i].edit = false"><v-icon>close</v-icon></v-btn></v-toolbar>
           <v-card-text>
@@ -34,7 +36,8 @@
       </v-dialog>
     </div>
     <v-btn 
-      @click.prevent="addComponent('cont', listComponents, strings)"
+      v-show="obj.length == 0"
+      @click.prevent="obj.push(createComponent('cont'))"
       fab dark color="indigo" 
       style="display: block; margin: 0 auto;">
       <v-icon dark>add</v-icon>
@@ -44,7 +47,6 @@
 
 
 <script>
-import testdata from '@/components/test/test.json'
 import testcomponent from '@/components/test/listComponents.json'
 import wrapper from '@/components/wrapperComponent.vue'
 import editor from '@/components/editor.vue'
@@ -57,31 +59,39 @@ export default {
       }
   },
   created() {
-    this.strings = testdata.strings
-    this.obj = testdata.obj
     this.listComponents = testcomponent
   },
   methods: {
     closePopup(i) {
       this.obj[i].edit = false
     },
+    addComponent(i, item) {
+      this.obj.splice(i, 0, item);
+    },
+    switchComponents(i, n) {
+      let tmp = this.obj[i];
+      this.obj[i] = this.obj[n];
+      this.obj[n] = tmp;
+      this.$forceUpdate()
+    },
     deleteComponent(i) {
+      for (let key in this.obj[i].props.string) delete this.strings[this.obj[i].props.string[key]]
+      for (let key in this.obj[i].props.editor) delete this.strings[this.obj[i].props.editor[key]]
       this.obj.splice(i, 1);
     },
-    addComponent(nameComponent, listComponents, strings) {
+    createComponent(nameComponent) {
       let idComponent = nameComponent + Date.now()
-      let addingComponent = JSON.parse(JSON.stringify(listComponents.find(item => item.name === nameComponent)))
+      let addingComponent = JSON.parse(JSON.stringify(this.listComponents.find(item => item.name === nameComponent)))
       addingComponent['id'] = idComponent
       for (let key in addingComponent.props.string) {
         addingComponent.props.string[key] = idComponent + '_string_' + key
-        strings[idComponent + '_string_' + key] = 'default'
+        this.strings[idComponent + '_string_' + key] = 'default'
       }
       for (let key in addingComponent.props.editor) {
         addingComponent.props.editor[key] = idComponent + '_editor_' + key
-        strings[idComponent + '_editor_' + key] = 'default'
+        this.strings[idComponent + '_editor_' + key] = 'default'
       }
-      this.obj.push(addingComponent)
-      console.log(this.obj)
+      return addingComponent
     }
   },
   components: {

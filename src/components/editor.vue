@@ -286,7 +286,7 @@ export default {
 .editor {
   position: relative;
   max-width: 100%;
-  margin: 0 auto 5rem auto;
+  margin: 0 auto 10px auto;
 
   &__content {
     padding: 10px;

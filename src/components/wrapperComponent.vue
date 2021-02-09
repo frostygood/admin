@@ -12,9 +12,9 @@ export default {
   },
   data: function () {
       return { 
-          mapBool: {},
-          mapEditor: {},
-          mapStrings: {}
+            mapBool: {},
+            mapEditor: {},
+            mapStrings: {}
       }
   },
   mounted() {
