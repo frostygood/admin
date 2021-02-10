@@ -1,17 +1,30 @@
 <template>
   <div>
-    <div 
-      v-for='(item, i) in obj' :key='i'
-      class="">
+    <v-btn @click.prevent="savePage()">Save</v-btn>
+    <v-btn @click="modal = true">Metatags & url page</v-btn>
+    <v-dialog v-model="modal" max-width="500px" scrollable>
+      <v-card>
+        <v-toolbar card dark color="primary"><v-btn icon dark @click="modal = false"><v-icon>close</v-icon></v-btn></v-toolbar>
+        <v-card-text>
+          <v-text-field v-model="name" label="Name Page"></v-text-field>
+          <v-text-field v-model="title" label="Title Page"></v-text-field>
+          <v-text-field v-model="description" label="Description Page"></v-text-field>
+          <v-text-field v-model="img" label="Url img Page"></v-text-field>
+          <div>
+            <v-text-field v-model="path" :label="'www.bmv.ru/'+type+'/'"></v-text-field>
+          </div>
+        </v-card-text>
+      </v-card>
+    </v-dialog>
+    <div v-for='(item, i) in obj' :key='i'>
       <wrapper :strings='strings' :obj='item'/>
       <div style="display: flex">
-        <v-btn small dark color="orange" @click.prevent="addComponent(i, createComponent('cont'))">add new block below</v-btn>
+        <v-btn small dark color="orange" @click.prevent="obj.splice(i, 0, createComponent('cont'))">add new block below</v-btn>
         <v-btn style="margin-right: auto;" small dark color="green" @click.prevent="obj[i].edit = true">Edit</v-btn>
         <v-btn v-show="i > 0" small dark color="blue" @click.prevent="switchComponents(i-1, i)">up</v-btn>
         <v-btn v-show="obj.length-1 > i" small dark color="blue" @click.prevent="switchComponents(i, i+1)">down</v-btn>
         <v-btn small color="error" @click.prevent='deleteComponent(i)'>Delete</v-btn>
       </div>
-
       <v-dialog
         v-model="obj[i].edit" max-width="900px" scrollable>
         <v-card tile>
@@ -45,28 +58,68 @@
   </div>
 </template>
 
-
 <script>
 import testcomponent from '@/components/test/listComponents.json'
 import wrapper from '@/components/wrapperComponent.vue'
 import editor from '@/components/editor.vue'
 export default {
+  props: {
+    site: {default: 'bmv'},
+    lang: {default: 'ru'},
+    type: {default: 'simple'},
+    id: {default: 'bmv_ru_simple_213412512'},
+  },
   data: function () {
       return { 
+        modal: false,
         listComponents: [],
         strings: {},
         obj: [],
+        path: '',
+        title: '',
+        description: '',
+        img: '',
+        name: '',
       }
   },
   created() {
     this.listComponents = testcomponent
+    this.getPage()
   },
   methods: {
-    closePopup(i) {
-      this.obj[i].edit = false
+    savePage: async function() {
+      let item = {
+        page: this.obj.slice(),
+        strings: JSON.parse(JSON.stringify(this.strings)),
+        title: this.title,
+        path: this.path,
+        description: this.description,
+        img: this.img,
+        id: this.id,
+        name: this.name
+      }
+      this.$db.collection(''+this.site).doc(''+this.lang).collection(''+this.type).doc(""+this.id).set(item).then(function() {
+          alert("Сохранено")
+        });
     },
-    addComponent(i, item) {
-      this.obj.splice(i, 0, item);
+    async getPage() {
+      await this.$db.collection(''+this.site).doc(''+this.lang).collection(''+this.type).doc(""+this.id).get()
+        .then((doc) => {
+          if (doc.exists) {
+              console.log("Document data:", doc.data());
+              this.strings = doc.data().strings
+              this.obj = doc.data().page
+              this.path = doc.data().path
+              this.title = doc.data().title
+              this.description = doc.data().description
+              this.img = doc.data().img
+              this.name = doc.data().name
+          } else {
+              console.log("No such document!");
+          }
+      }).catch(function(error) {
+          console.log("Error getting document:", error);
+      });
     },
     switchComponents(i, n) {
       let tmp = this.obj[i];
@@ -92,13 +145,9 @@ export default {
         this.strings[idComponent + '_editor_' + key] = 'default'
       }
       return addingComponent
-    }
+    },
   },
-  components: {
-      editor,
-      wrapper
-  }
-
+  components: {editor, wrapper}
 }
 </script>
 

@@ -83,3 +83,5 @@ static/sitemap.xml
 /package-lock.json
 
 src/config/firebase.js
+
+config/firebase.js

@@ -4,7 +4,7 @@ import router from './router'
 import store from './store'
 import Vuetify from 'vuetify'
 import 'vuetify/dist/vuetify.min.css'
-import firebaseConfig from './config/firebase'
+import firebaseConfig from '../config/firebase.js'
 import firebase from 'firebase'
 
 Vue.use(Vuetify)
@@ -12,6 +12,10 @@ Vue.use(Vuetify)
 Vue.config.productionTip = false
 
 firebase.initializeApp(firebaseConfig);
+
+Vue.prototype.$db = firebase.firestore();
+Vue.prototype.$storage = firebase.storage();
+Vue.prototype.$storageRef = firebase.storage().ref();
 
 new Vue({
   router,
