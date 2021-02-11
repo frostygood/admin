@@ -1,6 +1,5 @@
 import Vue from 'vue'
 import Router from 'vue-router'
-import Home from './views/Home.vue'
 import store from './store'
 
 Vue.use(Router)
@@ -9,8 +8,9 @@ export default new Router({
   routes: [
     {
       path: '/',
-      name: 'home',
-      component: Home
+      name: 'bmv',
+      component: () => import('./views/bmv.vue'),
+      beforeEnter: AuthGuard
     },
     {
       path: '/profile',

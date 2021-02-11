@@ -1,14 +1,21 @@
 <template>
-    <component 
+    <!-- <component 
         :is='obj.name'
-        v-bind="{...mapBool, ...mapEditor, ...mapStrings}"/>
+        v-bind="{...mapBool, ...mapEditor, ...mapStrings}"/> -->
+    <comp v-bind="{...mapBool, ...mapEditor, ...mapStrings}"/>
 </template>
 
 <script>
-import cont from '@/components/test/cont.vue'
+let componentsName = '';
+let siteName = '';
+
 export default {
+  created() {
+    componentsName = this.obj.name;
+    siteName = this.site;
+  },
   components: {
-      cont
+      'comp': () => import('@/components/' + siteName + '/' + componentsName + '.vue')
   },
   data: function () {
       return { 
@@ -46,6 +53,10 @@ export default {
         strings: {
             type: Object,
             default: () => {}
+        },
+        site: {
+            type: String,
+            default: 'bmv'
         },
   }
 }

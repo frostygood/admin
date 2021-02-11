@@ -17,7 +17,7 @@
       </v-card>
     </v-dialog>
     <div v-for='(item, i) in obj' :key='i'>
-      <wrapper :strings='strings' :obj='item'/>
+      <wrapper :strings='strings' :obj='item' :site='site'/>
       <div style="display: flex">
         <v-btn small dark color="orange" @click.prevent="obj.splice(i, 0, createComponent('cont'))">add new block below</v-btn>
         <v-btn style="margin-right: auto;" small dark color="green" @click.prevent="obj[i].edit = true">Edit</v-btn>
@@ -59,8 +59,6 @@
 </template>
 
 <script>
-import testcomponent from '@/components/test/listComponents.json'
-import wrapper from '@/components/wrapperComponent.vue'
 import editor from '@/components/editor.vue'
 export default {
   props: {
@@ -72,6 +70,7 @@ export default {
   data: function () {
       return { 
         modal: false,
+        loading: false,
         listComponents: [],
         strings: {},
         obj: [],
@@ -83,10 +82,32 @@ export default {
       }
   },
   created() {
-    this.listComponents = testcomponent
+    this.getComponents()
     this.getPage()
   },
+  watch: {
+    site: {handler: function () { 
+        this.getPage()
+        this.getComponents()
+      }
+    },
+    lang: {handler: function () { 
+        this.getPage()
+      }
+    },
+    type: {handler: function () { 
+        this.getPage()
+      }
+    },
+    id: {handler: function () { 
+        this.getPage()
+      }
+    },
+  },
   methods: {
+    getComponents() {
+      this.listComponents = require('@/components/' + this.site + '/listComponents.json')
+    },
     savePage: async function() {
       let item = {
         page: this.obj.slice(),
@@ -147,7 +168,10 @@ export default {
       return addingComponent
     },
   },
-  components: {editor, wrapper}
+  components: {
+    editor, 
+    'wrapper': () => import('@/components/wrapperComponent.vue')
+  }
 }
 </script>
 
