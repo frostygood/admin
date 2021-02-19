@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div v-if='site'>
     <v-btn @click.prevent="savePage()">Save</v-btn>
     <v-btn @click="modal = true">Metatags & url page</v-btn>
     <v-dialog v-model="modal" max-width="500px" scrollable>

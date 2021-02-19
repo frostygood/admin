@@ -2,7 +2,6 @@
   <div>
     <v-footer
       class="pa-3"
-      app
     >
       <v-spacer />
       Vinkovatov &copy; {{ new Date().getFullYear() }}
