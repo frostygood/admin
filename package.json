@@ -5,8 +5,10 @@
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
-    "lint": "vue-cli-service lint"
+    "lint": "vue-cli-service lint",
+    "umd": "vue-cli-service build --target lib --name builder src/main-umd.js --dest umd"
   },
+  "main": "umd/builder.umd.min.js",
   "dependencies": {
     "core-js": "^2.6.5",
     "firebase": "^6.2.0",
