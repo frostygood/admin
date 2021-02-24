@@ -1,14 +1,14 @@
 {
-  "name": "vue-admin",
-  "version": "0.1.1",
+  "name": "building",
+  "version": "0.2.1",
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build",
+    "build": "vue-cli-service build --dest deploy",
     "lint": "vue-cli-service lint",
-    "umd": "vue-cli-service build --target lib --name builder src/main-umd.js --dest umd"
+    "umd": "vue-cli-service build --target lib --name building src/main-umd.js"
   },
-  "main": "umd/builder.umd.min.js",
+  "main": "dist/building.umd.min.js",
   "dependencies": {
     "core-js": "^2.6.5",
     "firebase": "^6.2.0",

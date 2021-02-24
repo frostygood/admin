@@ -1,35 +1,23 @@
 <template>
-  <div><br><br><br>
-    <choose prop-site='bmv' :func-ok='choosePage'/>
-    <builder :site='site' :lang='lang' :type='type' :id='id'/>
-  </div>
+  <main-component site-prop='bmv' :list-components='json'/>
 </template>
 
 
 <script>
-import builder from '@/components/builder.vue'
-import choose from '@/components/choose.vue'
+import json from '/src/json/bmv.json'
+import mainComponent from '@/components/mainComponent.vue'
 export default {
   data() {
     return {
-      site: '',
-      lang: '',
-      type: '',
-      id: ''
+      json: json
     }
   },
+  created() {
+    console.log(json)
+  },
   components: {
-      builder,
-      choose
+      mainComponent
   }, 
-  methods: {
-    choosePage(site, lang, type, id) {
-      this.site = site
-      this.lang = lang
-      this.type = type
-      this.id = id
-    }
-  }
 }
 </script>
 

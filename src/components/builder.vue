@@ -1,5 +1,5 @@
 <template>
-  <div v-if='site'>
+  <div v-if='id'>
     <v-btn @click.prevent="savePage()">Save</v-btn>
     <v-btn @click="modal = true">Metatags & url page</v-btn>
     <v-dialog v-model="modal" max-width="500px" scrollable>
@@ -11,7 +11,7 @@
           <v-text-field v-model="description" label="Description Page"></v-text-field>
           <v-text-field v-model="img" label="Url img Page"></v-text-field>
           <div>
-            <v-text-field v-model="path" :label="'www.bmv.ru/'+type+'/'"></v-text-field>
+            <v-text-field v-model="path" :label="'www.' + site + '.ru/'+type+'/'"></v-text-field>
           </div>
         </v-card-text>
       </v-card>
@@ -19,7 +19,7 @@
     <div v-for='(item, i) in obj' :key='i'>
       <wrapper :strings='strings' :obj='item' :site='site'/>
       <div style="display: flex">
-        <v-btn small dark color="orange" @click.prevent="obj.splice(i, 0, createComponent('cont'))">add new block below</v-btn>
+        <v-btn small dark color="orange" @click.prevent="obj.splice(i+1, 0, createComponent('cont'))">add new block below</v-btn>
         <v-btn style="margin-right: auto;" small dark color="green" @click.prevent="obj[i].edit = true">Edit</v-btn>
         <v-btn v-show="i > 0" small dark color="blue" @click.prevent="switchComponents(i-1, i)">up</v-btn>
         <v-btn v-show="obj.length-1 > i" small dark color="blue" @click.prevent="switchComponents(i, i+1)">down</v-btn>
@@ -66,6 +66,7 @@ export default {
     lang: {default: 'ru'},
     type: {default: 'simple'},
     id: {default: 'bmv_ru_simple_213412512'},
+    propListComponents: {default: () => {}}
   },
   data: function () {
       return { 
@@ -81,9 +82,11 @@ export default {
         name: '',
       }
   },
-  created() {
-    this.getComponents()
-    this.getPage()
+  mounted() {
+    if (this.site) {
+      this.getComponents()
+      this.getPage() 
+    }
   },
   watch: {
     site: {handler: function () { 
@@ -106,7 +109,7 @@ export default {
   },
   methods: {
     getComponents() {
-      this.listComponents = require('@/components/' + this.site + '/listComponents.json')
+      this.listComponents = this.propListComponents
     },
     savePage: async function() {
       let item = {

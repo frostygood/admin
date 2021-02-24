@@ -146,12 +146,12 @@ export default {
         this.page = ''
       },
       getCategory() {
-        console.log(Object.keys(this.settings[this.language]))
+        //console.log(Object.keys(this.settings[this.language]))
         if (this.language) this.categoryArray = Object.keys(this.settings[this.language])
         else this.categoryArray = []
       },
       getPages() {
-        console.log(Object.entries(this.settings[this.language][this.category]))
+        //console.log(Object.entries(this.settings[this.language][this.category]))
         if (this.category) this.pageArray = Object.entries(this.settings[this.language][this.category])
         else this.pageArray = []
       },

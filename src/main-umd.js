@@ -1,4 +1,4 @@
-import builder from './views/bmv.vue'
+import building from '../src/components/mainComponent.vue'
 
-export {builder};
+export {building};
 

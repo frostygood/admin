@@ -1,8 +1,8 @@
 <template>
-    <!-- <component 
-        :is='obj.name'
-        v-bind="{...mapBool, ...mapEditor, ...mapStrings}"/> -->
-    <comp v-bind="{...mapBool, ...mapEditor, ...mapStrings}"/>
+    <component 
+        :is='site + "-" + obj.name'
+        v-bind="{...mapBool, ...mapEditor, ...mapStrings}"/>
+    <!-- <comp v-bind="{...mapBool, ...mapEditor, ...mapStrings}"/> -->
 </template>
 
 <script>
@@ -15,7 +15,8 @@ export default {
     siteName = this.site;
   },
   components: {
-      'comp': () => import('@/components/' + siteName + '/' + componentsName + '.vue')
+    //   'comp': () => import('@/components/' + siteName + '/' + componentsName + '.vue')
+    // 'cont': () => import('/src/components/bmv/cont.vue')
   },
   data: function () {
       return { 

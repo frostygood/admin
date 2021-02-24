@@ -1,58 +1,4 @@
-((typeof self !== 'undefined' ? self : this)["webpackJsonpbuilder"] = (typeof self !== 'undefined' ? self : this)["webpackJsonpbuilder"] || []).push([[2],{
-
-/***/ "0f13":
-/***/ (function(module, exports, __webpack_require__) {
-
-var map = {
-	"./bmv/cont.vue": [
-		"51fc",
-		1
-	],
-	"./builder.vue": [
-		"71a7"
-	],
-	"./choose.vue": [
-		"36b7"
-	],
-	"./editor.vue": [
-		"a897"
-	],
-	"./footer.vue": [
-		"076e",
-		3
-	],
-	"./header.vue": [
-		"71c2",
-		4
-	],
-	"./icon.vue": [
-		"3404"
-	],
-	"./wrapperComponent.vue": [
-		"9de0"
-	]
-};
-function webpackAsyncContext(req) {
-	if(!__webpack_require__.o(map, req)) {
-		return Promise.resolve().then(function() {
-			var e = new Error("Cannot find module '" + req + "'");
-			e.code = 'MODULE_NOT_FOUND';
-			throw e;
-		});
-	}
-
-	var ids = map[req], id = ids[0];
-	return Promise.all(ids.slice(1).map(__webpack_require__.e)).then(function() {
-		return __webpack_require__(id);
-	});
-}
-webpackAsyncContext.keys = function webpackAsyncContextKeys() {
-	return Object.keys(map);
-};
-webpackAsyncContext.id = "0f13";
-module.exports = webpackAsyncContext;
-
-/***/ }),
+((typeof self !== 'undefined' ? self : this)["webpackJsonpbuilding"] = (typeof self !== 'undefined' ? self : this)["webpackJsonpbuilding"] || []).push([[1],{
 
 /***/ "9de0":
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
@@ -61,12 +7,12 @@ module.exports = webpackAsyncContext;
 // ESM COMPAT FLAG
 __webpack_require__.r(__webpack_exports__);
 
-// CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js?{"cacheDirectory":"node_modules/.cache/vue-loader","cacheIdentifier":"2aa08ae2-vue-loader-template"}!./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./src/components/wrapperComponent.vue?vue&type=template&id=d4ddf1f4&
-var render = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('comp',_vm._b({},'comp',Object.assign({}, _vm.mapBool, _vm.mapEditor, _vm.mapStrings),false))}
+// CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js?{"cacheDirectory":"node_modules/.cache/vue-loader","cacheIdentifier":"12bf025c-vue-loader-template"}!./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./src/components/wrapperComponent.vue?vue&type=template&id=221da932&
+var render = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c(_vm.site + "-" + _vm.obj.name,_vm._b({tag:"component"},'component',Object.assign({}, _vm.mapBool, _vm.mapEditor, _vm.mapStrings),false))}
 var staticRenderFns = []
 
 
-// CONCATENATED MODULE: ./src/components/wrapperComponent.vue?vue&type=template&id=d4ddf1f4&
+// CONCATENATED MODULE: ./src/components/wrapperComponent.vue?vue&type=template&id=221da932&
 
 // EXTERNAL MODULE: ./node_modules/core-js/modules/es6.function.name.js
 var es6_function_name = __webpack_require__("7f7f");
@@ -87,10 +33,8 @@ var siteName = '';
     componentsName = this.obj.name;
     siteName = this.site;
   },
-  components: {
-    'comp': function comp() {
-      return __webpack_require__("0f13")("./" + siteName + '/' + componentsName + ".vue");
-    }
+  components: {//   'comp': () => import('@/components/' + siteName + '/' + componentsName + '.vue')
+    // 'cont': () => import('/src/components/bmv/cont.vue')
   },
   data: function data() {
     return {
@@ -175,4 +119,4 @@ var component = Object(componentNormalizer["a" /* default */])(
 /***/ })
 
 }]);
-//# sourceMappingURL=builder.common.2.js.map
+//# sourceMappingURL=building.umd.1.js.map

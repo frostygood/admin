@@ -17,6 +17,11 @@ Vue.prototype.$db = firebase.firestore();
 Vue.prototype.$storage = firebase.storage();
 Vue.prototype.$storageRef = firebase.storage().ref();
 
+Vue.component(
+  'bmv-cont',
+  () => import('../src/components/bmv/cont.vue')
+)
+
 new Vue({
   router,
   store,
