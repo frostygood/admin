@@ -16,14 +16,31 @@
         </v-card-text>
       </v-card>
     </v-dialog>
-    <div v-for='(item, i) in obj' :key='i'>
+    <div v-for='(item, i) in obj' :key='i' class="component-wrapper">
       <wrapper :strings='strings' :obj='item' :site='site'/>
-      <div style="display: flex">
-        <v-btn small dark color="orange" @click.prevent="obj.splice(i+1, 0, createComponent('cont'))">add new block below</v-btn>
-        <v-btn style="margin-right: auto;" small dark color="green" @click.prevent="obj[i].edit = true">Edit</v-btn>
-        <v-btn v-show="i > 0" small dark color="blue" @click.prevent="switchComponents(i-1, i)">up</v-btn>
-        <v-btn v-show="obj.length-1 > i" small dark color="blue" @click.prevent="switchComponents(i, i+1)">down</v-btn>
-        <v-btn small color="error" @click.prevent='deleteComponent(i)'>Delete</v-btn>
+      <div class="component-overlay">
+        <v-btn fab small dark color="orange" 
+          style="position: absolute; bottom: -20px; z-index: 2;"
+          @click.prevent="obj.splice(i+1, 0, createComponent('cont'))">
+            <v-icon dark>add</v-icon>
+        </v-btn>
+        <v-btn fab small dark color="green" 
+          @click.prevent="obj[i].edit = true">
+            <v-icon dark>mode_edit</v-icon>
+        </v-btn>
+        <v-btn fab v-show="i > 0" small dark color="blue" 
+          @click.prevent="switchComponents(i-1, i)">
+            <v-icon dark>keyboard_arrow_up</v-icon>
+        </v-btn>
+        <v-btn fab v-show="obj.length-1 > i" small dark color="blue" 
+          @click.prevent="switchComponents(i, i+1)">
+            <v-icon dark>keyboard_arrow_down</v-icon>
+        </v-btn>
+        <v-btn fab small dark color="error" 
+          style="margin-left: auto;" 
+          @click.prevent='deleteComponent(i)'>
+            <v-icon dark>close</v-icon>
+        </v-btn>
       </div>
       <v-dialog
         v-model="obj[i].edit" max-width="900px" scrollable>
@@ -180,5 +197,28 @@ export default {
 </script>
 
 <style scoped lang='scss'>
-
+.component-wrapper {
+  position: relative;
+}
+.component-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: .5s;
+  & button {
+    display: none;
+  }
+  &:hover, &:focus {
+    background: rgba(156, 38, 176, .7);
+    & button {
+      display: inline-block;
+    }
+  }
+}
 </style>

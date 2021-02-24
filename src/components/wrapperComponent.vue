@@ -2,22 +2,10 @@
     <component 
         :is='site + "-" + obj.name'
         v-bind="{...mapBool, ...mapEditor, ...mapStrings}"/>
-    <!-- <comp v-bind="{...mapBool, ...mapEditor, ...mapStrings}"/> -->
 </template>
 
 <script>
-let componentsName = '';
-let siteName = '';
-
 export default {
-  created() {
-    componentsName = this.obj.name;
-    siteName = this.site;
-  },
-  components: {
-    //   'comp': () => import('@/components/' + siteName + '/' + componentsName + '.vue')
-    // 'cont': () => import('/src/components/bmv/cont.vue')
-  },
   data: function () {
       return { 
             mapBool: {},

@@ -1,5 +1,8 @@
 <template>
+<div>
+  <br><br><br>
   <main-component site-prop='bmv' :list-components='json'/>
+</div>
 </template>
 
 

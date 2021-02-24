@@ -1,6 +1,6 @@
 <template>
 <div>
-    <v-btn @click="modal = true">{{btn}}</v-btn>
+    <v-btn @click="modal = true" style="float: right;">{{btn}}</v-btn>
     <v-dialog v-model="modal" max-width="500px" scrollable>
       <v-card>
         <v-toolbar card dark color="primary">

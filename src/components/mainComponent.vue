@@ -1,5 +1,5 @@
 <template>
-  <div><br><br><br>
+  <div>
     <choose :prop-site='site' :func-ok='choosePage'/>
     <builder :site='site' :lang='lang' :type='type' :id='id' :prop-list-components='listComponents'/>
   </div>
