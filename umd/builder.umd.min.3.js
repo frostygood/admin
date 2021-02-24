@@ -1,2 +1,0 @@
-(("undefined"!==typeof self?self:this)["webpackJsonpbuilder"]=("undefined"!==typeof self?self:this)["webpackJsonpbuilder"]||[]).push([[3],{"076e":function(e,t,s){"use strict";s.r(t);var n=function(){var e=this,t=e.$createElement,s=e._self._c||t;return s("div",[s("v-footer",{staticClass:"pa-3"},[s("v-spacer"),e._v("\n    Vinkovatov © "+e._s((new Date).getFullYear())+"\n    "),s("v-spacer")],1)],1)},l=[],a={},f=a,r=s("2877"),i=Object(r["a"])(f,n,l,!1,null,"47ecf6f6",null);t["default"]=i.exports}}]);
-//# sourceMappingURL=builder.umd.min.3.js.map
