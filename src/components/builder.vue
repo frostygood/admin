@@ -60,6 +60,7 @@
 
 <script>
 import editor from '@/components/editor.vue'
+import wrapper from '@/components/wrapperComponent.vue'
 export default {
   props: {
     site: {default: 'bmv'},
@@ -173,7 +174,7 @@ export default {
   },
   components: {
     editor, 
-    'wrapper': () => import('@/components/wrapperComponent.vue')
+    wrapper
   }
 }
 </script>
