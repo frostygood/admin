@@ -21,6 +21,10 @@ Vue.component(
   'bmv-cont',
   () => import('../src/components/bmv/cont.vue')
 )
+Vue.component(
+  'smartcat-cont',
+  () => import('../src/components/smartcat/cont.vue')
+)
 
 new Vue({
   router,

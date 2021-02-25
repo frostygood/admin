@@ -79,10 +79,10 @@ import editor from '@/components/editor.vue'
 import wrapper from '@/components/wrapperComponent.vue'
 export default {
   props: {
-    site: {default: 'bmv'},
-    lang: {default: 'ru'},
-    type: {default: 'simple'},
-    id: {default: 'bmv_ru_simple_213412512'},
+    site: {default: ''},
+    lang: {default: ''},
+    type: {default: ''},
+    id: {default: ''},
     propListComponents: {default: () => {}}
   },
   data: function () {

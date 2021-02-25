@@ -55,7 +55,7 @@
 <script>
 export default {
     props: {
-        propSite: {default: 'bmv'},
+        propSite: {default: ''},
         propLang: {default: ''},
         propCategory: {default: ''},
         propPage: {default: ''},

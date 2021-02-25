@@ -1,7 +1,7 @@
 <template>
   <div>
-    <choose :prop-site='site' :func-ok='choosePage' :func-create='openCreatePopup'/>
-    <builder :site='site' :lang='lang' :type='type' :id='id' :prop-list-components='listComponents'/>
+    <choose :prop-site='siteProp' :func-ok='choosePage' :func-create='openCreatePopup'/>
+    <builder :site='siteProp' :lang='lang' :type='type' :id='id' :prop-list-components='listComponents'/>
     <v-dialog v-model="modal" max-width="500px" scrollable>
       <v-card>
         <v-toolbar card dark color="primary">
@@ -31,7 +31,7 @@ import create from '@/components/create.vue'
 export default {
   props: {
     listComponents: {default: () => {}}, 
-    siteProp : {default: 'bmv'}
+    siteProp : {default: ''}
   },
   data() {
     return {
