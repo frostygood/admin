@@ -84,7 +84,7 @@ export default {
         }
     },
     mounted() {
-      this.getProps()
+      //this.getProps()
     },
     watch: {
       propSite: {handler: function () {
@@ -113,6 +113,7 @@ export default {
           this.site = this.propSite
           await this.$db.collection(''+this.site).doc('collections').get()
             .then((doc) => {
+              console.log(doc)
               console.log("Document data:", doc.data());
               this.settings = doc.data()
 

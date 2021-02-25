@@ -1,13 +1,13 @@
 <template>
 <div>
   <br><br><br>
-  <main-component site-prop='bmv' :list-components='json'/>
+  <main-component site-prop='smartcat' :list-components='json'/>
 </div>
 </template>
 
 
 <script>
-import json from '/src/json/bmv.json'
+import json from '/src/json/smartcat.json'
 import mainComponent from '@/components/mainComponent.vue'
 export default {
   data() {
