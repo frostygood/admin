@@ -1,17 +1,16 @@
 <template>
   <div v-if='id'>
-    <v-btn @click.prevent="savePage()">Save</v-btn>
-    <v-btn @click="modal = true">Metatags & url page</v-btn>
+    <v-btn class="green" dark @click.prevent="savePage()">Save</v-btn>
+    <v-btn class="orange" dark @click="modal = true">Metatags & url page</v-btn>
     <v-dialog v-model="modal" max-width="500px" scrollable>
       <v-card>
         <v-toolbar card dark color="primary"><v-btn icon dark @click="modal = false"><v-icon>close</v-icon></v-btn></v-toolbar>
         <v-card-text>
-          <v-text-field v-model="name" label="Name Page"></v-text-field>
           <v-text-field v-model="title" label="Title Page"></v-text-field>
           <v-text-field v-model="description" label="Description Page"></v-text-field>
           <v-text-field v-model="img" label="Url img Page"></v-text-field>
           <div>
-            <v-text-field v-model="path" :label="'www.' + site + '.ru/'+type+'/'"></v-text-field>
+            <v-text-field v-model="path" :label="(lang=='en' ? 'www' : lang ) + '.' + site + '.com/'+type+'/'"></v-text-field>
           </div>
         </v-card-text>
       </v-card>
@@ -97,7 +96,6 @@ export default {
         title: '',
         description: '',
         img: '',
-        name: '',
       }
   },
   mounted() {
@@ -138,11 +136,11 @@ export default {
         description: this.description,
         img: this.img,
         id: this.id,
-        name: this.name
       }
-      this.$db.collection(''+this.site).doc(''+this.lang).collection(''+this.type).doc(""+this.id).set(item).then(function() {
+      this.$db.collection(''+this.site).doc(''+this.lang).collection(''+this.type).doc(""+this.id).set(item).then(() => {
           alert("Сохранено")
         });
+      
     },
     async getPage() {
       await this.$db.collection(''+this.site).doc(''+this.lang).collection(''+this.type).doc(""+this.id).get()
@@ -155,7 +153,6 @@ export default {
               this.title = doc.data().title
               this.description = doc.data().description
               this.img = doc.data().img
-              this.name = doc.data().name
           } else {
               console.log("No such document!");
           }

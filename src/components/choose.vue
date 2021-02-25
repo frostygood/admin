@@ -1,6 +1,6 @@
 <template>
 <div>
-    <v-btn @click="modal = true" style="float: right;">{{btn}}</v-btn>
+    <v-btn @click="modal = true" class="blue" dark style="float: right;">{{btn}}</v-btn>
     <v-dialog v-model="modal" max-width="500px" scrollable>
       <v-card>
         <v-toolbar card dark color="primary">
@@ -35,9 +35,17 @@
             :disabled="pageBlock"
             label="Page (страница)">
           </v-select>
-          <v-btn 
-            @click.prevent='actionFunc(site, language, category, page)'
-            v-if='site && language && category && page'>OK</v-btn>
+          <div style="display: flex; flex-direction: row;">
+            <v-btn 
+              color="orange" dark
+              @click.prevent='createFunc(site, language, category)'
+              v-if='site && language && category'>Create new page in this catalog</v-btn>
+            <v-btn 
+              style='margin-left: auto;'
+              color="green" dark
+              @click.prevent='actionFunc(site, language, category, page)'
+              v-if='site && language && category && page'>Edit this page</v-btn>
+          </div>
         </v-card-text>
       </v-card>
     </v-dialog>
@@ -53,7 +61,8 @@ export default {
         propPage: {default: ''},
         btn: {default: 'Choose page'},
         text: {default: 'Choose page (выбрать страницу для редактирования)'},
-        funcOk: {type: Function}
+        funcOk: {type: Function},
+        funcCreate: {type: Function}
     },
     data() {
         return {
@@ -94,7 +103,7 @@ export default {
         }
       },
       modal: {handler: function () {
-          if (this.modal && !this.site) this.getPages()
+          if (this.modal) this.getProps()
         }
       },
     },
@@ -146,39 +155,29 @@ export default {
         this.page = ''
       },
       getCategory() {
-        //console.log(Object.keys(this.settings[this.language]))
         if (this.language) this.categoryArray = Object.keys(this.settings[this.language])
         else this.categoryArray = []
       },
       getPages() {
-        //console.log(Object.entries(this.settings[this.language][this.category]))
         if (this.category) this.pageArray = Object.entries(this.settings[this.language][this.category])
         else this.pageArray = []
       },
       actionFunc(site, lang, category, page) {
         if (this.funcOk) {
           this.funcOk(site, lang, category, page)
-          this.defaultData()
+          this.getProps()
           this.modal = false
         }
         else console.log('не передана action функция')
       },
-      defaultData() {
-          this.site = ''
-          this.settings = {}
-          this.pageArray = []
-          this.page = ''
-          this.pageLoading = false
-          this.pageBlock = false
-          this.categoryArray = []
-          this.category = ''
-          this.categoryLoading = false
-          this.categoryBlock = false
-          this.languageArray = []
-          this.language = ''
-          this.languageLoading = false
-          this.languageBlock = false
-      }
+      createFunc(site, lang, category) {
+        if (this.funcCreate) {
+          this.funcCreate(this.settings, site, lang, category)
+          this.getProps()
+          this.modal = false
+        }
+        else console.log('не передана action функция')
+      },
     }
 }
 </script>
