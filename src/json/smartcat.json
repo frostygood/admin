@@ -14,5 +14,23 @@
                 "texts": "id"
             }
         }
+    },
+    {
+        "name": "heading",
+        "edit": false,
+        "id": "id",
+        "props": {
+            "boolean": {
+                "wide": false
+            },
+            "string": { 
+                "title": "id",
+                "titleTag": "h2",
+                "textTag": "h3"
+            },
+            "editor": {
+                "text": "id"
+            }
+        }
     }
 ]

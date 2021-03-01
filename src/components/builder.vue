@@ -8,7 +8,7 @@
         <v-card-text>
           <v-text-field v-model="title" label="Title Page"></v-text-field>
           <v-text-field v-model="description" label="Description Page"></v-text-field>
-          <v-text-field v-model="img" label="Url img Page"></v-text-field>
+          <!-- <v-text-field v-model="img" label="Url img Page"></v-text-field> -->
           <div>
             <v-text-field v-model="path" :label="(lang=='en' ? 'www' : lang ) + '.' + site + '.com/'+type+'/'"></v-text-field>
           </div>
@@ -20,7 +20,7 @@
       <div class="component-overlay">
         <v-btn fab small dark color="orange" 
           style="position: absolute; bottom: -20px; z-index: 2;"
-          @click.prevent="obj.splice(i+1, 0, createComponent('cont'))">
+          @click.prevent="openChooseComponentModal(i)">
             <v-icon dark>add</v-icon>
         </v-btn>
         <v-btn fab small dark color="green" 
@@ -49,12 +49,12 @@
             <h3>Checkboxes</h3>
             <v-switch v-for="(elem, b) in item.props.boolean" :key="b" 
             style="display: inline-block; margin-right: 30px;"
-            v-model="obj[i].props.boolean[b]" :label="`Switch 1`"></v-switch>
+            v-model="obj[i].props.boolean[b]" :label="b"></v-switch>
             <h3 style='margin-top: 30px;'>Strings</h3>
             <v-text-field
               v-for="(elem, s) in item.props.string" :key="s" 
               v-model="strings[obj[i].props.string[s]]"
-              label="Placeholder">
+              :label="s">
             </v-text-field>
             <h3 style='margin-top: 30px;'>Texts</h3>
             <editor v-for="(elem, e) in item.props.editor" :key="e" 
@@ -64,9 +64,20 @@
         </v-card>
       </v-dialog>
     </div>
+    <v-dialog v-model="modalComponents" max-width="900px" scrollable>
+      <v-card>
+        <v-toolbar card dark color="primary"><v-btn icon dark @click="modalComponents = false"><v-icon>close</v-icon></v-btn></v-toolbar>
+        <v-card-text>
+          <div v-for="(item, i) in listComponents" :key="i">
+            <component :is='site + "-" +item.name'/>
+            <v-btn style="margin: 10px auto 30px; display: block;" @click="chooseComponent(item.name)">Выбрать</v-btn>
+          </div>
+        </v-card-text>
+      </v-card>
+    </v-dialog>
     <v-btn 
       v-show="obj.length == 0"
-      @click.prevent="obj.push(createComponent('cont'))"
+      @click.prevent="openChooseComponentModal(0)"
       fab dark color="indigo" 
       style="display: block; margin: 0 auto;">
       <v-icon dark>add</v-icon>
@@ -83,7 +94,7 @@ export default {
     lang: {default: ''},
     type: {default: ''},
     id: {default: ''},
-    propListComponents: {default: () => {}}
+    propListComponents: {default: () => {}},
   },
   data: function () {
       return { 
@@ -96,6 +107,8 @@ export default {
         title: '',
         description: '',
         img: '',
+        modalComponents: false,
+        positionCreatingComponent: 0
       }
   },
   mounted() {
@@ -170,6 +183,14 @@ export default {
       for (let key in this.obj[i].props.string) delete this.strings[this.obj[i].props.string[key]]
       for (let key in this.obj[i].props.editor) delete this.strings[this.obj[i].props.editor[key]]
       this.obj.splice(i, 1);
+    },
+    openChooseComponentModal(i){
+      this.modalComponents = true,
+      this.positionCreatingComponent = i
+    },
+    chooseComponent(name) {
+      this.modalComponents=false
+      this.obj.splice(this.positionCreatingComponent+1, 0, this.createComponent(name))
     },
     createComponent(nameComponent) {
       let idComponent = nameComponent + Date.now()

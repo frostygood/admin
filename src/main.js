@@ -7,6 +7,8 @@ import 'vuetify/dist/vuetify.min.css'
 import firebaseConfig from '../config/firebase.js'
 import firebase from 'firebase'
 
+import json from '/src/json/smartcat.json'
+
 Vue.use(Vuetify)
 
 Vue.config.productionTip = false
@@ -17,14 +19,20 @@ Vue.prototype.$db = firebase.firestore();
 Vue.prototype.$storage = firebase.storage();
 Vue.prototype.$storageRef = firebase.storage().ref();
 
-Vue.component(
-  'bmv-cont',
-  () => import('../src/components/bmv/cont.vue')
-)
-Vue.component(
-  'smartcat-cont',
-  () => import('../src/components/smartcat/cont.vue')
-)
+
+json.forEach(item => {
+  Vue.component(
+    'bmv-' + item.name,
+    () => import('../src/components/bmv/' + item.name + '.vue')
+  )  
+})
+
+json.forEach(item => {
+  Vue.component(
+    'smartcat-' + item.name,
+    () => import('../src/components/smartcat/' + item.name + '.vue')
+  )  
+})
 
 new Vue({
   router,
