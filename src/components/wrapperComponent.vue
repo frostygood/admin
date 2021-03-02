@@ -1,7 +1,7 @@
 <template>
     <component 
         :is='site + "-" + obj.name'
-        v-bind="{...mapBool, ...mapEditor, ...mapStrings}"/>
+        v-bind="{...mapBool, ...mapEditor, ...mapStrings, ...mapLinks, ...mapImgs}"/>
 </template>
 
 <script>
@@ -10,7 +10,9 @@ export default {
       return { 
             mapBool: {},
             mapEditor: {},
-            mapStrings: {}
+            mapStrings: {},
+            mapLinks: {},
+            mapImgs: {}
       }
   },
   mounted() {
@@ -32,6 +34,10 @@ export default {
           for (let key in this.obj.props.string) this.mapStrings[key] = this.strings[this.obj.props.string[key]]
           this.mapEditor = {}
           for (let key in this.obj.props.editor) this.mapEditor[key] = this.strings[this.obj.props.editor[key]]
+          this.mapLinks = {}
+          for (let key in this.obj.props.links) this.mapLinks[key] = this.obj.props.links[key]
+          this.mapImgs = {}
+          for (let key in this.obj.props.imgs) this.mapLinks[key] = this.obj.props.imgs[key]
       }
   },
   props: {

@@ -12,6 +12,10 @@
             },
             "editor": {
                 "texts": "id"
+            },
+            "imgs": {
+            },
+            "links": {
             }
         }
     },
@@ -30,6 +34,46 @@
             },
             "editor": {
                 "text": "id"
+            },
+            "imgs": {
+            },
+            "links": {
+            }
+        }
+    },
+    {
+        "name": "threecards",
+        "edit": false,
+        "id": "id",
+        "props": {
+            "boolean": {
+                "b_column_formatting_of_the_card": false,
+                "b_column_narrow_formatting_of_the_card": false,
+                "b_bold_link_in_cards": false
+            },
+            "string": { 
+                "s_title_in_first_card": "Fig1",
+                "s_text_in_link_in_first_card": "Donec sit amet  →",
+                "s_title_in_second_card": "Fig2",
+                "s_text_in_link_in_second_card": "Donec sit amet  →",
+                "s_title_in_third_card": "Fig3",
+                "s_text_in_link_in_third_card": "Donec sit amet  →",
+                "s_role_of_user": "lsp"
+            },
+            "editor": {
+                "e_text_in_first_card": "id",
+                "e_text_in_second_card": "id",
+                "e_text_in_third_card": "id"
+            },
+            "imgs": {
+                "i_img_in_first_card": "https://www.smartcat.com/_vuepromo_img/client-portal/customize.svg",
+                "i_img_in_second_card": "https://www.smartcat.com/_vuepromo_img/client-portal/customize.svg",
+                "i_img_in_third_card": "https://www.smartcat.com/_vuepromo_img/client-portal/customize.svg"
+            },
+            "links": {
+                "l_href_in_link_in_first_card": "",
+                "l_href_in_link_in_second_card": "",
+                "l_href_in_link_in_third_card": ""
             }
         }
     }

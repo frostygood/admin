@@ -60,7 +60,17 @@
             <editor v-for="(elem, e) in item.props.editor" :key="e" 
               v-model="strings[elem]">
             </editor>
-          </v-card-text>
+            <h3 style='margin-top: 30px;'>Links</h3>
+            <v-text-field
+              v-for="(elem, l) in item.props.links" :key="l" 
+              v-model="obj[i].props.boolean[l]"
+              :label="l"/>
+            <h3 style='margin-top: 30px;'>Imgs</h3>
+            <v-text-field
+              v-for="(elem, im) in item.props.imgs" :key="im" 
+              v-model="obj[i].props.imgs[im]"
+              :label="im"/>
+            </v-card-text>
         </v-card>
       </v-dialog>
     </div>
@@ -190,7 +200,9 @@ export default {
     },
     chooseComponent(name) {
       this.modalComponents=false
+      console.log(this.createComponent(name))
       this.obj.splice(this.positionCreatingComponent+1, 0, this.createComponent(name))
+      
     },
     createComponent(nameComponent) {
       let idComponent = nameComponent + Date.now()
