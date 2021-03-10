@@ -19,6 +19,8 @@ Vue.prototype.$db = firebase.firestore();
 Vue.prototype.$storage = firebase.storage();
 Vue.prototype.$storageRef = firebase.storage().ref();
 
+Vue.prototype.$firebase = firebase;
+
 
 json.forEach(item => {
   Vue.component(

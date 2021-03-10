@@ -66,11 +66,20 @@
               v-model="obj[i].props.boolean[l]"
               :label="l"/>
             <h3 style='margin-top: 30px;'>Imgs</h3>
-            <v-text-field
-              v-for="(elem, im) in item.props.imgs" :key="im" 
-              v-model="obj[i].props.imgs[im]"
-              :label="im"/>
-            </v-card-text>
+            <v-layout row wrap v-for="(elem, im) in item.props.imgs" :key="im">
+              <v-flex xs8 sm10 md10>
+                <v-text-field 
+                  disabled
+                  v-model="obj[i].props.imgs[im]"
+                  :label="im"/>
+              </v-flex>
+              <v-btn 
+                fab small dark color="green" 
+                @click="openDownload(i, im, 300)">
+                <v-icon dark>add</v-icon>
+              </v-btn>
+            </v-layout>
+          </v-card-text>
         </v-card>
       </v-dialog>
     </div>
@@ -85,6 +94,14 @@
         </v-card-text>
       </v-card>
     </v-dialog>
+    <download 
+      v-model='modalDownload' 
+      :size='size' 
+      :site='site'
+      :lang='lang'
+      :type='type'
+      :id='id'
+      :func-ok='uploadImg'/>
     <v-btn 
       v-show="obj.length == 0"
       @click.prevent="openChooseComponentModal(0)"
@@ -97,6 +114,7 @@
 
 <script>
 import editor from '@/components/editor.vue'
+import download from '@/components/download.vue'
 import wrapper from '@/components/wrapperComponent.vue'
 export default {
   props: {
@@ -109,6 +127,7 @@ export default {
   data: function () {
       return { 
         modal: false,
+        modalDownload: false,
         loading: false,
         listComponents: [],
         strings: {},
@@ -118,7 +137,10 @@ export default {
         description: '',
         img: '',
         modalComponents: false,
-        positionCreatingComponent: 0
+        positionCreatingComponent: 0,
+        obj_i: '', 
+        imgs_im: '',
+        size: 300
       }
   },
   mounted() {
@@ -149,6 +171,15 @@ export default {
   methods: {
     getComponents() {
       this.listComponents = this.propListComponents
+    },
+    openDownload(obj_i, imgs_im, size) {
+      this.modalDownload = true
+      this.obj_i = obj_i 
+      this.imgs_im = imgs_im
+      this.size = size
+    },
+    uploadImg(url) {
+      this.obj[this.obj_i].props.imgs[this.imgs_im] = url
     },
     savePage: async function() {
       let item = {
@@ -221,7 +252,8 @@ export default {
   },
   components: {
     editor, 
-    wrapper
+    wrapper,
+    download
   }
 }
 </script>
