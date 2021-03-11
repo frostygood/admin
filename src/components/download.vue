@@ -69,7 +69,7 @@ export default {
           alert("You can upload only .jpg and .png files! / Можно загружать только .jpg и .png файлы!");
         } else {
           this.file = event.target.files[0],
-          this.url = event.target.files[0].name.replace(/[^\w\d\.\-]/g, '_') + '_' + this.lang + '_' + this.type + '_' + this.id + '_' + Date.now();
+          this.url = this.id + '_' + Date.now() + '_' + event.target.files[0].name.replace(/[^\w\d\.\-]/g, '_');
           this.uploadFile(this.file, this.url)
         }
       },
