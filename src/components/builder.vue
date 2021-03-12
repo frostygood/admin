@@ -240,12 +240,12 @@ export default {
       let addingComponent = JSON.parse(JSON.stringify(this.listComponents.find(item => item.name === nameComponent)))
       addingComponent['id'] = idComponent
       for (let key in addingComponent.props.string) {
+        this.strings[idComponent + '_string_' + key] = addingComponent.props.string[key]
         addingComponent.props.string[key] = idComponent + '_string_' + key
-        this.strings[idComponent + '_string_' + key] = 'default'
       }
       for (let key in addingComponent.props.editor) {
+        this.strings[idComponent + '_editor_' + key] = addingComponent.props.editor[key]
         addingComponent.props.editor[key] = idComponent + '_editor_' + key
-        this.strings[idComponent + '_editor_' + key] = 'default'
       }
       return addingComponent
     },
