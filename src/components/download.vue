@@ -9,7 +9,7 @@
     </v-toolbar>
     <v-card-text>
       <form v-on:submit.prevent id="formFiles" action="">
-        <input type="file" id="uploadImg" accept="image/x-png,image/png,image/jpg,image/jpeg" @change="processFile($event)">
+        <input type="file" id="uploadImg" accept="image/*" @change="processFile($event)">
         <p>Only .jpg and .png files, size &lt; {{size}}кб</p>
       </form>
       <img :src="urlFirebase" alt="" style="max-width: 500px;">
@@ -61,12 +61,13 @@ export default {
         this.file = null
         this.url = ''
         this.urlFirebase = ''
+        console.log(event.target.files[0].type)
         if (((event.target.files[0].size/1024).toFixed(0)) > this.size) {
           document.getElementById('formFiles').reset();
           alert("The file should not be more than " + this.size + "kb! / Файл не должен превышать " + this.size + "кб!");
-        } else if ((event.target.files[0].type !== "image/jpeg") && (event.target.files[0].type !== "image/jpg") && (event.target.files[0].type !== "image/x-png") && (event.target.files[0].type !== "image/png")) {
+        } else if ((event.target.files[0].type.split('/')[0] !== "image")) {
           document.getElementById('formFiles').reset();
-          alert("You can upload only .jpg and .png files! / Можно загружать только .jpg и .png файлы!");
+          alert("You can upload only image files! / Можно загружать только тзображения!");
         } else {
           this.file = event.target.files[0],
           this.url = this.id + '_' + Date.now() + '_' + event.target.files[0].name.replace(/[^\w\d\.\-]/g, '_');
