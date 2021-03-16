@@ -1,17 +1,42 @@
 [
     {
-        "name": "cont",
+        "name": "hero",
         "edit": false,
         "id": "id",
         "props": {
             "boolean": {
-                "bool": false
+                "limitWidthRightBlock": false,
+                "rega": true
             },
             "string": { 
-                "str": "id"
+                "title": "Headline here",
+                "linkText": "",
+                "role": "all"
             },
             "editor": {
-                "texts": "id"
+                "sub_text": "Today’s companies need to deliver their content instantly across the globe. But this is not possible if you keep exchanging endless emails and files to get content localized. The only way to stay globally relevant is to connect the whole multilingual content delivery loop."
+            },
+            "imgs": {
+                "img": "smartcat_en_lp_1615563130487_1615564289035_about-1.png"
+            },
+            "links": {
+                "linkHref": "",
+                "video": ""
+            }
+        }
+    },
+    {
+        "name": "space",
+        "edit": false,
+        "id": "id",
+        "props": {
+            "boolean": {
+                "note": false
+            },
+            "string": { 
+                "name_class": "large"
+            },
+            "editor": {
             },
             "imgs": {
             },
@@ -28,12 +53,10 @@
                 "wide": false
             },
             "string": { 
-                "title": "id",
-                "titleTag": "h2",
-                "textTag": "h3"
+                "title": "Headline here"
             },
             "editor": {
-                "text": "id"
+                "text": "Today’s companies need to deliver their content instantly across the globe."
             },
             "imgs": {
             },
@@ -58,7 +81,7 @@
                 "s_text_in_link_in_second_card": "Donec sit amet  →",
                 "s_title_in_third_card": "Fig3",
                 "s_text_in_link_in_third_card": "Donec sit amet  →",
-                "s_role_of_user": "lsp"
+                "s_role_of_user": "all"
             },
             "editor": {
                 "e_text_in_first_card": "id",
@@ -74,6 +97,30 @@
                 "l_href_in_link_in_first_card": "",
                 "l_href_in_link_in_second_card": "",
                 "l_href_in_link_in_third_card": ""
+            }
+        }
+    },
+    {
+        "name": "cta",
+        "edit": false,
+        "id": "id",
+        "props": {
+            "boolean": {
+                "big": true,
+                "rega": true
+            },
+            "string": { 
+                "caption": "demo caption",
+                "linkText": "",
+                "role": "all"
+            },
+            "editor": {
+                "text": "Today’s companies need to deliver their content"
+            },
+            "imgs": {
+            },
+            "links": {
+                "linkHref": ""
             }
         }
     }

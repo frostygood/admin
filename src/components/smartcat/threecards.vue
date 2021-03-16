@@ -1,4 +1,5 @@
 <template>
+<div class="sc20-wrapper">
 	<div class="three-cards" :class="[b_column_formatting_of_the_card ? 'three-cards_column' : '', b_column_narrow_formatting_of_the_card ? 'three-cards_column_narrow' : '']">
 		<div class="item" v-if="s_title_in_first_card || e_text_in_first_card || s_text_in_link_in_first_card || i_img_in_first_card">
 			<div class="img-wrap"><img :src="i_img_in_first_card" :alt="s_title_in_first_card"></div>
@@ -37,6 +38,7 @@
 			</div>
 		</div>
 	</div>
+</div>
 </template>
 <script>
     export default {
@@ -44,7 +46,7 @@
 			s_title_in_first_card: {
 				type: String,
 				default: 'Fig1',
-				//builder: 'string'
+				builder: 'string'
 			},
 			e_text_in_first_card: {
 				type: String,
