@@ -33,32 +33,32 @@
 		width: 100%;
 		&.large {
 			height: 144px;
-			@media (max-width: 900px) {
+			@media (max-width: 1149px) {
 				height: 96px;
 			}
-			@media (max-width: 700px) {
+			@media (max-width: 767px) {
 				height: 80px;
 			}
 		}
 		&.big {
 			height: 80px;
-			@media (max-width: 900px) {
+			@media (max-width: 1149px) {
 				height: 40px;
 			}
 		}
 		&.small {
 			height: 40px;
-			@media (max-width: 900px) {
+			@media (max-width: 1149px) {
 				height: 24px;
 			}
 		}
 		&.last {
 			height: 240px;
 
-			@media (max-width: 900px) {
+			@media (max-width: 1149px) {
 				height: 200px;
 			}
-			@media (max-width: 700px) {
+			@media (max-width: 767px) {
 				height: 160px;
 			}
 		}

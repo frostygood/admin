@@ -8,6 +8,11 @@ export default new Router({
   routes: [
     {
       path: '/',
+      name: 'main',
+      component: () => import('./views/main.vue')
+    },
+    {
+      path: '/bmv',
       name: 'bmv',
       component: () => import('./views/bmv.vue'),
       beforeEnter: AuthGuard

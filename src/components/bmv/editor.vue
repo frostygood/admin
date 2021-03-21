@@ -1,8 +1,5 @@
 <template>
-	<div class="cont" :class="{'bool':bool}">
-		<h1>{{str}}</h1>
-		<div v-html="texts"></div>
-	</div>
+	<div class="editor" v-html="texts"></div>
 </template>
 <script>
 	export default {
@@ -11,25 +8,16 @@
 				type: String,
 				default: "...",
 			},
-			bool: {
-				type: Boolean,
-				default: true,
-			},
-			str: {
-				type: String,
-				default: 'чак-чак',
-			},
+		},
+		data: function () {
+			return {};
 		},
 	};
 </script>
 <style lang="scss">
-	.cont {
-		padding: 20px;
-		background-color: wheat;
-		&.bool {
-			background-color: yellow;
-		}
-		h3 {
+	.editor {
+		max-width: 720px;
+		h2 {
 			font-family: "Inter", Roboto, Arial, sans-serif;
 			font-style: normal;
 			font-weight: 600;
@@ -37,6 +25,24 @@
 			line-height: 40px;
 			letter-spacing: -0.03em;
 			color: #333333;
+			margin: 0 0 16px 0;
+			padding: 0;
+			color: #27357e;
+			@media (max-width: 1149px) {
+				font-size: 24px;
+				line-height: 32px;
+				letter-spacing: -0.02em;
+			}
+		}
+		h3 {
+			font-family: "Inter", Roboto, Arial, sans-serif;
+			font-style: normal;
+			font-weight: 600;
+			font-size: 24px;
+			line-height: 40px;
+			letter-spacing: -0.03em;
+			color: #333333;
+			margin: 0 0 16px 0;
 			padding: 0;
 
 			@media (max-width: 1149px) {
@@ -78,16 +84,26 @@
 			}
 		}
 
-		ul,
-		ol {
+		ul{
+			padding: 0;
+			margin: 0;
 			margin-bottom: 40px;
-
+			list-style: none;
 			li {
-				padding: 0 0 0 24px;
-				background-position: left 10px;
-				background-image: url("data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTMiIGhlaWdodD0iMTEiIHZpZXdCb3g9IjAgMCAxMyAxMSIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4NCjxwYXRoIGQ9Ik0xIDUuMzA3NjlMNC40NzM2OCA5TDEyIDEiIHN0cm9rZT0iIzRDNTY2NiIgc3Ryb2tlLXdpZHRoPSIxLjUiLz4NCjwvc3ZnPg0K");
-				background-repeat: no-repeat;
-				background-size: 11px;
+				position: relative;
+				padding-left: 15px;
+				margin-left: 20px;
+				margin-bottom: 10px;
+				&::before {
+					content: "";
+					position: absolute;
+					width: 6px;
+					height: 6px;
+					border-radius: 50%;
+					background-color: #222;
+					left: 0;
+					top: 14px;
+				}
 			}
 		}
 	}

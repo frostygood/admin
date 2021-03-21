@@ -1,17 +1,56 @@
 [
     {
-        "name": "cont",
+        "name": "space",
         "edit": false,
         "id": "id",
         "props": {
             "boolean": {
-                "bool": false
+                "note": false
             },
             "string": { 
-                "str": "id"
+                "name_class": "large"
             },
             "editor": {
-                "texts": "id"
+            },
+            "imgs": {
+            },
+            "links": {
+            }
+        }
+    },
+    {
+        "name": "editor",
+        "edit": false,
+        "id": "id",
+        "props": {
+            "boolean": {
+            },
+            "string": {
+            },
+            "editor": {
+                "texts": "..."
+            },
+            "imgs": {
+            },
+            "links": {
+            }
+        }
+    },
+    {
+        "name": "contactus",
+        "edit": false,
+        "id": "id",
+        "props": {
+            "boolean": {
+                "pageBlock": true
+            },
+            "string": {
+            },
+            "editor": {
+            },
+            "imgs": {
+            },
+            "links": {
             }
         }
     }

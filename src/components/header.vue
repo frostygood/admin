@@ -38,7 +38,6 @@
       </v-list>
     </v-navigation-drawer>
     <v-toolbar
-      app
       dark
       class="purple"
     >

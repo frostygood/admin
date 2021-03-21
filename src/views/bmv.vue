@@ -1,13 +1,12 @@
 <template>
-<div>
-  <br><br><br>
-  <main-component site-prop='smartcat' :list-components='json'/>
+<div class='wrapper'>
+  <main-component site-prop='bmv' :list-components='json'/>
 </div>
 </template>
 
 
 <script>
-import json from '/src/json/smartcat.json'
+import json from '/src/json/bmv.json'
 import mainComponent from '@/components/mainComponent.vue'
 export default {
   data() {
@@ -25,5 +24,21 @@ export default {
 </script>
 
 <style scoped lang='scss'>
+.wrapper {
+	display: block;
+	position: relative;
+	margin: 0 auto;
+	max-width: 1110px;
+	width: 100%;
+	box-sizing: border-box;
 
+	@media (max-width: 1149px) {
+		max-width: 732px;
+	}
+	@media (max-width: 767px) {
+		max-width: 100%;
+		padding-left: 20px;
+		padding-right: 20px;
+	}
+}
 </style>
