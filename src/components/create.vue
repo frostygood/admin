@@ -80,7 +80,7 @@ export default {
           this.$db.collection(''+site).doc(''+lang).collection(''+type).doc(""+id).set(item).then(() => {
             this.$db.collection(''+site).doc('collections').set(setItem).then(() => {
               this.funcOk(site, lang, type, id)
-              this.path = ''
+              this.resetChoose()
             })
           });
         }
@@ -131,6 +131,20 @@ export default {
             console.log("Error getting document:", error);
         });
       },
+      resetChoose() {
+        this.path = ''
+        this.lang = ''
+        this.type = ''
+        this.id = ''
+        this.copiPage.title = ''
+        this.copiPage.path = ''
+        this.copiPage.description = ''
+        this.copiPage.img = ''
+        this.copiPage.id = ''
+        this.copiPage.active = false
+        this.copiPage.page = []
+        this.copiPage.strings = {}
+      }
     }
 }
 </script>

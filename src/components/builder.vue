@@ -42,7 +42,7 @@
         </v-btn>
       </div>
       <v-dialog
-        v-model="obj[i].edit" max-width="900px" scrollable>
+        v-model="obj[i].edit" max-width="900px" persistent lazy scrollable>
         <v-card tile>
           <v-toolbar card dark color="primary"><v-btn icon dark @click="obj[i].edit = false"><v-icon>close</v-icon></v-btn></v-toolbar>
           <v-card-text>
@@ -140,7 +140,7 @@ export default {
         positionCreatingComponent: 0,
         obj_i: '', 
         imgs_im: '',
-        size: 300
+        size: 1200
       }
   },
   mounted() {
