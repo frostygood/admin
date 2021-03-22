@@ -75,7 +75,7 @@
               </v-flex>
               <v-btn 
                 fab small dark color="green" 
-                @click="openDownload(i, im, 300)">
+                @click="openDownload(i, im, size)">
                 <v-icon dark>add</v-icon>
               </v-btn>
             </v-layout>
