@@ -140,7 +140,7 @@ export default {
         positionCreatingComponent: 0,
         obj_i: '', 
         imgs_im: '',
-        size: 1200
+        size: 300
       }
   },
   mounted() {
