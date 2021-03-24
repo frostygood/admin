@@ -1,5 +1,7 @@
 <template>
-	<div class="editor" v-html="texts"></div>
+	<div class="wrapper">
+		<div class="editor" v-html="texts"></div>
+	</div>
 </template>
 <script>
 	export default {
@@ -17,6 +19,7 @@
 <style lang="scss">
 	.editor {
 		max-width: 720px;
+		margin-right: auto;
 		h2 {
 			font-family: "Inter", Roboto, Arial, sans-serif;
 			font-style: normal;
@@ -91,9 +94,16 @@
 			list-style: none;
 			li {
 				position: relative;
+				padding: 0;
+				margin: 0;
 				padding-left: 15px;
 				margin-left: 20px;
 				margin-bottom: 10px;
+				line-height: 1.3;
+				p {
+					margin: 0;
+					line-height: 1.3;
+				}
 				&::before {
 					content: "";
 					position: absolute;
@@ -102,7 +112,10 @@
 					border-radius: 50%;
 					background-color: #222;
 					left: 0;
-					top: 14px;
+					top: 9px;
+					@media (max-width: 1149px) {
+						top: 8px;
+					}
 				}
 			}
 		}

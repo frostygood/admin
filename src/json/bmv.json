@@ -13,7 +13,24 @@
             "editor": {
             },
             "imgs": {
-                "io": ""
+            },
+            "links": {
+            }
+        }
+    },
+    {
+        "name": "title",
+        "edit": false,
+        "id": "id",
+        "props": {
+            "boolean": {
+            },
+            "string": { 
+                "title": "H1 заголовок"
+            },
+            "editor": {
+            },
+            "imgs": {
             },
             "links": {
             }
