@@ -8,7 +8,17 @@
         <v-card-text>
           <v-text-field v-model="title" label="Title Page"></v-text-field>
           <v-text-field v-model="description" label="Description Page"></v-text-field>
-          <!-- <v-text-field v-model="img" label="Url img Page"></v-text-field> -->
+          <v-text-field v-model="img" label="Prev page (.jpg)"></v-text-field>
+          <div style="display: flex">
+            <v-flex xs10 sm10 md10>
+              <v-text-field disabled v-model="img" label="Prev page (.jpg)"/>
+            </v-flex>
+            <v-flex xs2 sm2 md2>
+              <v-btn fab small dark color="green" @click="openDownload(null, null, 200, 'meta')">
+                <v-icon dark>add</v-icon>
+              </v-btn>
+            </v-flex>
+          </div>
           <div>
             <v-text-field v-model="path" :label="(lang=='en' ? 'www' : lang ) + '.' + site + '.com/'+type+'/'"></v-text-field>
           </div>
@@ -75,7 +85,7 @@
               </v-flex>
               <v-btn 
                 fab small dark color="green" 
-                @click="openDownload(i, im, size)">
+                @click="openDownload(i, im, size, false)">
                 <v-icon dark>add</v-icon>
               </v-btn>
             </v-layout>
@@ -101,7 +111,7 @@
       :lang='lang'
       :type='type'
       :id='id'
-      :func-ok='uploadImg'/>
+      :func-ok='uploadMetaImg ? uploadPreviewImg : uploadImg'/>
     <v-btn 
       v-show="obj.length == 0"
       @click.prevent="openChooseComponentModal(0)"
@@ -136,6 +146,7 @@ export default {
         title: '',
         description: '',
         img: '',
+        uploadMetaImg: false,
         modalComponents: false,
         positionCreatingComponent: 0,
         obj_i: '', 
@@ -172,14 +183,18 @@ export default {
     getComponents() {
       this.listComponents = this.propListComponents
     },
-    openDownload(obj_i, imgs_im, size) {
+    openDownload(obj_i, imgs_im, size, meta) {
       this.modalDownload = true
+      this.uploadMetaImg = !!meta
       this.obj_i = obj_i 
       this.imgs_im = imgs_im
       this.size = size
     },
     uploadImg(url) {
       this.obj[this.obj_i].props.imgs[this.imgs_im] = url
+    },
+    uploadPreviewImg(url) {
+      this.img = url
     },
     savePage: async function() {
       let item = {

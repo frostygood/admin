@@ -281,7 +281,10 @@ export default {
   border: 1px solid lightgray;
   padding: 5px;
   margin-bottom: 0;
-  background: lightgrey;;
+  background: lightgrey;
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 .editor {
   position: relative;
