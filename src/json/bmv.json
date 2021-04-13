@@ -1,5 +1,47 @@
 [
     {
+        "name": "bigimg",
+        "edit": false,
+        "id": "id",
+        "props": {
+            "boolean": {
+            },
+            "string": { 
+                "alt": ""
+            },
+            "editor": {
+            },
+            "imgs": {
+                "img": ""
+            },
+            "links": {
+            }
+        }
+    },
+    {
+        "name": "imgsblock",
+        "edit": false,
+        "id": "id",
+        "props": {
+            "boolean": {
+            },
+            "string": { 
+                "first_alt": "",
+                "second_alt": "",
+                "third_alt": ""
+            },
+            "editor": {
+            },
+            "imgs": {
+                "first_img": "",
+                "second_img": "",
+                "third_img": ""
+            },
+            "links": {
+            }
+        }
+    },
+    {
         "name": "space",
         "edit": false,
         "id": "id",

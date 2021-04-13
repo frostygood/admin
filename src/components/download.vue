@@ -34,6 +34,9 @@ export default {
         lang: {default: ''},
         type: {default: ''},
         id: {default: ''},
+        filestore: {
+            default: 'https://firebasestorage.googleapis.com/v0/b/smartcatpromoadmin.appspot.com/o/smartcat%2F'
+        },
     },
     data() {
         return {
@@ -99,7 +102,7 @@ export default {
               console.log('File available at', downloadURL);
               document.getElementById('formFiles').reset();
               this.progress = 0
-              this.urlFirebase = 'https://firebasestorage.googleapis.com/v0/b/smartcatpromoadmin.appspot.com/o/smartcat%2F' + url + '?alt=media'
+              this.urlFirebase = this.filestore + url + '?alt=media'
             });
           }
         );

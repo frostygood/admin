@@ -1,6 +1,6 @@
 <template>
 <div class='wrapper'>
-  <main-component site-prop='bmv' :list-components='json'/>
+  <main-component site-prop='bmv' :list-components='json' filestore="https://firebasestorage.googleapis.com/v0/b/bmven-a02bd.appspot.com/o/bmv%2F"/>
 </div>
 </template>
 

@@ -8,13 +8,12 @@
         <v-card-text>
           <v-text-field v-model="title" label="Title Page"></v-text-field>
           <v-text-field v-model="description" label="Description Page"></v-text-field>
-          <v-text-field v-model="img" label="Prev page (.jpg)"></v-text-field>
           <div style="display: flex">
             <v-flex xs10 sm10 md10>
               <v-text-field disabled v-model="img" label="Prev page (.jpg)"/>
             </v-flex>
             <v-flex xs2 sm2 md2>
-              <v-btn fab small dark color="green" @click="openDownload(null, null, 200, 'meta')">
+              <v-btn fab small dark color="green" @click="openDownload(null, null, 300, 'meta')">
                 <v-icon dark>add</v-icon>
               </v-btn>
             </v-flex>
@@ -26,7 +25,7 @@
       </v-card>
     </v-dialog>
     <div v-for='(item, i) in obj' :key='i' class="component-wrapper">
-      <wrapper :strings='strings' :obj='item' :site='site'/>
+      <wrapper :strings='strings' :obj='item' :site='site' :filestore='filestore'/>
       <div class="component-overlay">
         <v-btn fab small dark color="orange" 
           style="position: absolute; bottom: -20px; z-index: 2;"
@@ -111,6 +110,7 @@
       :lang='lang'
       :type='type'
       :id='id'
+      :filestore='filestore'
       :func-ok='uploadMetaImg ? uploadPreviewImg : uploadImg'/>
     <v-btn 
       v-show="obj.length == 0"
@@ -132,6 +132,7 @@ export default {
     lang: {default: ''},
     type: {default: ''},
     id: {default: ''},
+    filestore: {default: ''},
     propListComponents: {default: () => {}},
   },
   data: function () {

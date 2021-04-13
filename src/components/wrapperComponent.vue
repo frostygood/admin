@@ -37,7 +37,7 @@ export default {
           this.mapLinks = {}
           for (let key in this.obj.props.links) this.mapLinks[key] = this.obj.props.links[key]
           this.mapImgs = {}
-          for (let key in this.obj.props.imgs) this.mapLinks[key] = 'https://firebasestorage.googleapis.com/v0/b/smartcatpromoadmin.appspot.com/o/smartcat%2F' + this.obj.props.imgs[key] + '?alt=media'
+          for (let key in this.obj.props.imgs) this.mapLinks[key] = this.filestore + this.obj.props.imgs[key] + '?alt=media'
       }
   },
   props: {
@@ -52,6 +52,9 @@ export default {
         site: {
             type: String,
             default: 'bmv'
+        },
+        filestore: {
+            default: 'https://firebasestorage.googleapis.com/v0/b/smartcatpromoadmin.appspot.com/o/smartcat%2F'
         },
   }
 }
