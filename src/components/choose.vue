@@ -17,14 +17,24 @@
             :disabled="languageBlock"
             label="language (язык)">
           </v-select>
-          <v-select
-            v-if='language'
-            :items="categoryArray"
-            v-model='category'
-            :loading='categoryLoading'
-            :disabled="categoryBlock"
-            label="Category (категории)">
-          </v-select>
+          <v-layout align-center justify-center>
+            <v-flex xs6 sm8 md8>
+              <v-select
+                v-if='language'
+                :items="categoryArray"
+                v-model='category'
+                :loading='categoryLoading'
+                :disabled="categoryBlock"
+                label="Category (категории)">
+              </v-select>
+            </v-flex>
+            <v-flex xs6 sm4 md4>
+              <v-btn 
+                  color="orange" dark
+                  @click.prevent='createFunc(site, language, category)'
+                  v-if='site && language && category'>Create new page</v-btn>
+            </v-flex>
+          </v-layout>
           <v-select
             v-if='category'
             item-text="1"
@@ -36,10 +46,6 @@
             label="Page (страница)">
           </v-select>
           <div style="display: flex; flex-direction: row;">
-            <v-btn 
-              color="orange" dark
-              @click.prevent='createFunc(site, language, category)'
-              v-if='site && language && category'>Create new page in this catalog</v-btn>
             <v-btn 
               style='margin-left: auto;'
               color="green" dark

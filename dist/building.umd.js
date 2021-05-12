@@ -263,13 +263,6 @@ module.exports = function (it, key) {
 
 /***/ }),
 
-/***/ "090e":
-/***/ (function(module, exports, __webpack_require__) {
-
-// extracted by mini-css-extract-plugin
-
-/***/ }),
-
 /***/ "0a49":
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -403,6 +396,7 @@ var deepFreezeEs6 = deepFreeze;
 var _default = deepFreeze;
 deepFreezeEs6.default = _default;
 
+/** @implements CallbackResponse */
 class Response {
   /**
    * @param {CompiledMode} mode
@@ -412,10 +406,11 @@ class Response {
     if (mode.data === undefined) mode.data = {};
 
     this.data = mode.data;
+    this.isMatchIgnored = false;
   }
 
   ignoreMatch() {
-    this.ignore = true;
+    this.isMatchIgnored = true;
   }
 }
 
@@ -762,6 +757,15 @@ function startsWith(re, lexeme) {
   return match && match.index === 0;
 }
 
+// BACKREF_RE matches an open parenthesis or backreference. To avoid
+// an incorrect parse, it additionally matches the following:
+// - [...] elements, where the meaning of parentheses and escapes change
+// - other escape sequences, so we do not misparse escape sequences as
+//   interesting elements
+// - non-matching or lookahead parentheses, which do not capture. These
+//   follow the '(' with a '?'.
+const BACKREF_RE = /\[(?:[^\\\]]|\\.)*\]|\(\??|\\([1-9][0-9]*)|\\./;
+
 // join logically computes regexps.join(separator), but fixes the
 // backreferences so they continue to match.
 // it also places each individual regular expression into it's own
@@ -773,45 +777,34 @@ function startsWith(re, lexeme) {
  * @returns {string}
  */
 function join(regexps, separator = "|") {
-  // backreferenceRe matches an open parenthesis or backreference. To avoid
-  // an incorrect parse, it additionally matches the following:
-  // - [...] elements, where the meaning of parentheses and escapes change
-  // - other escape sequences, so we do not misparse escape sequences as
-  //   interesting elements
-  // - non-matching or lookahead parentheses, which do not capture. These
-  //   follow the '(' with a '?'.
-  const backreferenceRe = /\[(?:[^\\\]]|\\.)*\]|\(\??|\\([1-9][0-9]*)|\\./;
   let numCaptures = 0;
-  let ret = '';
-  for (let i = 0; i < regexps.length; i++) {
+
+  return regexps.map((regex) => {
     numCaptures += 1;
     const offset = numCaptures;
-    let re = source(regexps[i]);
-    if (i > 0) {
-      ret += separator;
-    }
-    ret += "(";
+    let re = source(regex);
+    let out = '';
+
     while (re.length > 0) {
-      const match = backreferenceRe.exec(re);
-      if (match == null) {
-        ret += re;
+      const match = BACKREF_RE.exec(re);
+      if (!match) {
+        out += re;
         break;
       }
-      ret += re.substring(0, match.index);
+      out += re.substring(0, match.index);
       re = re.substring(match.index + match[0].length);
       if (match[0][0] === '\\' && match[1]) {
         // Adjust the backreference.
-        ret += '\\' + String(Number(match[1]) + offset);
+        out += '\\' + String(Number(match[1]) + offset);
       } else {
-        ret += match[0];
+        out += match[0];
         if (match[0] === '(') {
           numCaptures++;
         }
       }
     }
-    ret += ")";
-  }
-  return ret;
+    return out;
+  }).map(re => `(${re})`).join(separator);
 }
 
 // Common regexps
@@ -1462,7 +1455,7 @@ function compileLanguage(language, { plugins }) {
    */
   function compileMode(mode, parent) {
     const cmode = /** @type CompiledMode */ (mode);
-    if (mode.compiled) return cmode;
+    if (mode.isCompiled) return cmode;
 
     [
       // do this early so compiler extensions generally don't have to worry about
@@ -1484,7 +1477,7 @@ function compileLanguage(language, { plugins }) {
       compileRelevance
     ].forEach(ext => ext(mode, parent));
 
-    mode.compiled = true;
+    mode.isCompiled = true;
 
     let keywordPattern = null;
     if (typeof mode.keywords === "object") {
@@ -1603,7 +1596,7 @@ function expandOrCloneMode(mode) {
   return mode;
 }
 
-var version = "10.6.0";
+var version = "10.7.2";
 
 // @ts-nocheck
 
@@ -1677,8 +1670,8 @@ function BuildVuePlugin(hljs) {
 
 /** @type {HLJSPlugin} */
 const mergeHTMLPlugin = {
-  "after:highlightBlock": ({ block, result, text }) => {
-    const originalStream = nodeStream(block);
+  "after:highlightElement": ({ el, result, text }) => {
+    const originalStream = nodeStream(el);
     if (!originalStream.length) return;
 
     const resultNode = document.createElement('div');
@@ -1836,6 +1829,11 @@ https://github.com/highlightjs/highlight.js/issues/2880#issuecomment-747275419
 */
 
 /**
+ * @type {Record<string, boolean>}
+ */
+const seenDeprecations = {};
+
+/**
  * @param {string} message
  */
 const error = (message) => {
@@ -1855,7 +1853,10 @@ const warn = (message, ...args) => {
  * @param {string} message
  */
 const deprecated = (version, message) => {
+  if (seenDeprecations[`${version}/${message}`]) return;
+
   console.log(`Deprecated as of ${version}. ${message}`);
+  seenDeprecations[`${version}/${message}`] = true;
 };
 
 /*
@@ -1940,8 +1941,14 @@ const HLJS = function(hljs) {
   /**
    * Core highlighting function.
    *
-   * @param {string} languageName - the language to use for highlighting
-   * @param {string} code - the code to highlight
+   * OLD API
+   * highlight(lang, code, ignoreIllegals, continuation)
+   *
+   * NEW API
+   * highlight(code, {lang, ignoreIllegals})
+   *
+   * @param {string} codeOrlanguageName - the language to use for highlighting
+   * @param {string | HighlightOptions} optionsOrCode - the code to highlight
    * @param {boolean} [ignoreIllegals] - whether to ignore illegal matches, default is to bail
    * @param {CompiledMode} [continuation] - current continuation mode, if any
    *
@@ -1953,7 +1960,24 @@ const HLJS = function(hljs) {
    * @property {CompiledMode} top - top of the current mode stack
    * @property {boolean} illegal - indicates whether any illegal matches were found
   */
-  function highlight(languageName, code, ignoreIllegals, continuation) {
+  function highlight(codeOrlanguageName, optionsOrCode, ignoreIllegals, continuation) {
+    let code = "";
+    let languageName = "";
+    if (typeof optionsOrCode === "object") {
+      code = codeOrlanguageName;
+      ignoreIllegals = optionsOrCode.ignoreIllegals;
+      languageName = optionsOrCode.language;
+      // continuation not supported at all via the new API
+      // eslint-disable-next-line no-undefined
+      continuation = undefined;
+    } else {
+      // old API
+      deprecated("10.7.0", "highlight(lang, code, ...args) has been deprecated.");
+      deprecated("10.7.0", "Please use highlight(code, options) instead.\nhttps://github.com/highlightjs/highlight.js/issues/2277");
+      languageName = codeOrlanguageName;
+      code = optionsOrCode;
+    }
+
     /** @type {BeforeHighlightContext} */
     const context = {
       code,
@@ -1980,14 +2004,12 @@ const HLJS = function(hljs) {
    * private highlight that's used internally and does not fire callbacks
    *
    * @param {string} languageName - the language to use for highlighting
-   * @param {string} code - the code to highlight
-   * @param {boolean} [ignoreIllegals] - whether to ignore illegal matches, default is to bail
-   * @param {CompiledMode} [continuation] - current continuation mode, if any
+   * @param {string} codeToHighlight - the code to highlight
+   * @param {boolean?} [ignoreIllegals] - whether to ignore illegal matches, default is to bail
+   * @param {CompiledMode?} [continuation] - current continuation mode, if any
    * @returns {HighlightResult} - result of the highlight operation
   */
-  function _highlight(languageName, code, ignoreIllegals, continuation) {
-    const codeToHighlight = code;
-
+  function _highlight(languageName, codeToHighlight, ignoreIllegals, continuation) {
     /**
      * Return keyword data if a match is a keyword
      * @param {CompiledMode} mode - current mode
@@ -2019,8 +2041,14 @@ const HLJS = function(hljs) {
           buf = "";
 
           relevance += keywordRelevance;
-          const cssClass = language.classNameAliases[kind] || kind;
-          emitter.addKeyword(match[0], cssClass);
+          if (kind.startsWith("_")) {
+            // _ implied for relevance only, do not highlight
+            // by applying a class name
+            buf += match[0];
+          } else {
+            const cssClass = language.classNameAliases[kind] || kind;
+            emitter.addKeyword(match[0], cssClass);
+          }
         } else {
           buf += match[0];
         }
@@ -2090,7 +2118,7 @@ const HLJS = function(hljs) {
         if (mode["on:end"]) {
           const resp = new Response(mode);
           mode["on:end"](match, resp);
-          if (resp.ignore) matched = false;
+          if (resp.isMatchIgnored) matched = false;
         }
 
         if (matched) {
@@ -2142,7 +2170,7 @@ const HLJS = function(hljs) {
       for (const cb of beforeCallbacks) {
         if (!cb) continue;
         cb(match, resp);
-        if (resp.ignore) return doIgnore(lexeme);
+        if (resp.isMatchIgnored) return doIgnore(lexeme);
       }
 
       if (newMode && newMode.endSameAsBegin) {
@@ -2506,12 +2534,12 @@ const HLJS = function(hljs) {
 
   /** @type {HLJSPlugin} */
   const brPlugin = {
-    "before:highlightBlock": ({ block }) => {
+    "before:highlightElement": ({ el }) => {
       if (options.useBR) {
-        block.innerHTML = block.innerHTML.replace(/\n/g, '').replace(/<br[ /]*>/g, '\n');
+        el.innerHTML = el.innerHTML.replace(/\n/g, '').replace(/<br[ /]*>/g, '\n');
       }
     },
-    "after:highlightBlock": ({ result }) => {
+    "after:highlightElement": ({ result }) => {
       if (options.useBR) {
         result.value = result.value.replace(/\n/g, "<br>");
       }
@@ -2521,7 +2549,7 @@ const HLJS = function(hljs) {
   const TAB_REPLACE_RE = /^(<[^>]+>|\t)+/gm;
   /** @type {HLJSPlugin} */
   const tabReplacePlugin = {
-    "after:highlightBlock": ({ result }) => {
+    "after:highlightElement": ({ result }) => {
       if (options.tabReplace) {
         result.value = result.value.replace(TAB_REPLACE_RE, (m) =>
           m.replace(/\t/g, options.tabReplace)
@@ -2536,21 +2564,23 @@ const HLJS = function(hljs) {
    *
    * @param {HighlightedHTMLElement} element - the HTML element to highlight
   */
-  function highlightBlock(element) {
+  function highlightElement(element) {
     /** @type HTMLElement */
     let node = null;
     const language = blockLanguage(element);
 
     if (shouldNotHighlight(language)) return;
 
-    fire("before:highlightBlock",
-      { block: element, language: language });
+    // support for v10 API
+    fire("before:highlightElement",
+      { el: element, language: language });
 
     node = element;
     const text = node.textContent;
-    const result = language ? highlight(language, text, true) : highlightAuto(text);
+    const result = language ? highlight(text, { language, ignoreIllegals: true }) : highlightAuto(text);
 
-    fire("after:highlightBlock", { block: element, result, text });
+    // support for v10 API
+    fire("after:highlightElement", { el: element, result, text });
 
     element.innerHTML = result.value;
     updateClassName(element, language, result.language);
@@ -2596,7 +2626,7 @@ const HLJS = function(hljs) {
     deprecated("10.6.0", "initHighlighting() is deprecated.  Use highlightAll() instead.");
 
     const blocks = document.querySelectorAll('pre code');
-    blocks.forEach(highlightBlock);
+    blocks.forEach(highlightElement);
   };
 
   // Higlights all when DOMContentLoaded fires
@@ -2607,21 +2637,22 @@ const HLJS = function(hljs) {
   }
 
   let wantsHighlight = false;
-  let domLoaded = false;
 
   /**
    * auto-highlights all pre>code elements on the page
    */
   function highlightAll() {
     // if we are called too early in the loading process
-    if (!domLoaded) { wantsHighlight = true; return; }
+    if (document.readyState === "loading") {
+      wantsHighlight = true;
+      return;
+    }
 
     const blocks = document.querySelectorAll('pre code');
-    blocks.forEach(highlightBlock);
+    blocks.forEach(highlightElement);
   }
 
   function boot() {
-    domLoaded = true;
     // if a highlight was requested before DOM was loaded, do now
     if (wantsHighlight) highlightAll();
   }
@@ -2658,6 +2689,20 @@ const HLJS = function(hljs) {
 
     if (lang.aliases) {
       registerAliases(lang.aliases, { languageName });
+    }
+  }
+
+  /**
+   * Remove a language grammar module
+   *
+   * @param {string} languageName
+   */
+  function unregisterLanguage(languageName) {
+    delete languages[languageName];
+    for (const alias of Object.keys(aliases)) {
+      if (aliases[alias] === languageName) {
+        delete aliases[alias];
+      }
     }
   }
 
@@ -2706,7 +2751,7 @@ const HLJS = function(hljs) {
     if (typeof aliasList === 'string') {
       aliasList = [aliasList];
     }
-    aliasList.forEach(alias => { aliases[alias] = languageName; });
+    aliasList.forEach(alias => { aliases[alias.toLowerCase()] = languageName; });
   }
 
   /**
@@ -2719,9 +2764,33 @@ const HLJS = function(hljs) {
   }
 
   /**
+   * Upgrades the old highlightBlock plugins to the new
+   * highlightElement API
+   * @param {HLJSPlugin} plugin
+   */
+  function upgradePluginAPI(plugin) {
+    // TODO: remove with v12
+    if (plugin["before:highlightBlock"] && !plugin["before:highlightElement"]) {
+      plugin["before:highlightElement"] = (data) => {
+        plugin["before:highlightBlock"](
+          Object.assign({ block: data.el }, data)
+        );
+      };
+    }
+    if (plugin["after:highlightBlock"] && !plugin["after:highlightElement"]) {
+      plugin["after:highlightElement"] = (data) => {
+        plugin["after:highlightBlock"](
+          Object.assign({ block: data.el }, data)
+        );
+      };
+    }
+  }
+
+  /**
    * @param {HLJSPlugin} plugin
    */
   function addPlugin(plugin) {
+    upgradePluginAPI(plugin);
     plugins.push(plugin);
   }
 
@@ -2752,17 +2821,31 @@ const HLJS = function(hljs) {
     return fixMarkup(arg);
   }
 
+  /**
+   *
+   * @param {HighlightedHTMLElement} el
+   */
+  function deprecateHighlightBlock(el) {
+    deprecated("10.7.0", "highlightBlock will be removed entirely in v12.0");
+    deprecated("10.7.0", "Please use highlightElement now.");
+
+    return highlightElement(el);
+  }
+
   /* Interface definition */
   Object.assign(hljs, {
     highlight,
     highlightAuto,
     highlightAll,
     fixMarkup: deprecateFixMarkup,
-    highlightBlock,
+    highlightElement,
+    // TODO: Remove with v12 API
+    highlightBlock: deprecateHighlightBlock,
     configure,
     initHighlighting,
     initHighlightingOnLoad,
     registerLanguage,
+    unregisterLanguage,
     listLanguages,
     getLanguage,
     registerAliases,
@@ -3978,7 +4061,7 @@ function highlight(name, value, options) {
 
   high.configure({__emitter: Emitter, classPrefix: prefix})
 
-  result = high.highlight(name, value, true)
+  result = high.highlight(value, {language: name, ignoreIllegals: true})
 
   high.configure(before || {})
 
@@ -4454,17 +4537,6 @@ module.exports = function (exec, skipClosing) {
   } catch (e) { /* empty */ }
   return safe;
 };
-
-
-/***/ }),
-
-/***/ "4eee":
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* harmony import */ var _node_modules_mini_css_extract_plugin_dist_loader_js_ref_8_oneOf_1_0_node_modules_css_loader_index_js_ref_8_oneOf_1_1_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_postcss_loader_src_index_js_ref_8_oneOf_1_2_node_modules_sass_loader_dist_cjs_js_ref_8_oneOf_1_3_node_modules_cache_loader_dist_cjs_js_ref_0_0_node_modules_vue_loader_lib_index_js_vue_loader_options_builder_vue_vue_type_style_index_0_id_6709c320_scoped_true_lang_scss___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__("090e");
-/* harmony import */ var _node_modules_mini_css_extract_plugin_dist_loader_js_ref_8_oneOf_1_0_node_modules_css_loader_index_js_ref_8_oneOf_1_1_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_postcss_loader_src_index_js_ref_8_oneOf_1_2_node_modules_sass_loader_dist_cjs_js_ref_8_oneOf_1_3_node_modules_cache_loader_dist_cjs_js_ref_0_0_node_modules_vue_loader_lib_index_js_vue_loader_options_builder_vue_vue_type_style_index_0_id_6709c320_scoped_true_lang_scss___WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_node_modules_mini_css_extract_plugin_dist_loader_js_ref_8_oneOf_1_0_node_modules_css_loader_index_js_ref_8_oneOf_1_1_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_postcss_loader_src_index_js_ref_8_oneOf_1_2_node_modules_sass_loader_dist_cjs_js_ref_8_oneOf_1_3_node_modules_cache_loader_dist_cjs_js_ref_0_0_node_modules_vue_loader_lib_index_js_vue_loader_options_builder_vue_vue_type_style_index_0_id_6709c320_scoped_true_lang_scss___WEBPACK_IMPORTED_MODULE_0__);
-/* unused harmony reexport * */
 
 
 /***/ }),
@@ -5367,6 +5439,13 @@ NAME in FProto || __webpack_require__("9e1e") && dP(FProto, NAME, {
 var core = module.exports = { version: '2.6.12' };
 if (typeof __e == 'number') __e = core; // eslint-disable-line no-undef
 
+
+/***/ }),
+
+/***/ "840a":
+/***/ (function(module, exports, __webpack_require__) {
+
+// extracted by mini-css-extract-plugin
 
 /***/ }),
 
@@ -7471,19 +7550,19 @@ if (typeof window !== 'undefined') {
 // Indicate to webpack that this file can be concatenated
 /* harmony default export */ var setPublicPath = (null);
 
-// CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js?{"cacheDirectory":"node_modules/.cache/vue-loader","cacheIdentifier":"00c85710-vue-loader-template"}!./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./src/components/mainComponent.vue?vue&type=template&id=37741ac9&scoped=true&
-var render = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',[_c('choose',{attrs:{"prop-site":_vm.siteProp,"func-ok":_vm.choosePage,"func-create":_vm.openCreatePopup}}),_c('builder',{attrs:{"site":_vm.siteProp,"lang":_vm.lang,"type":_vm.type,"id":_vm.id,"prop-list-components":_vm.listComponents}}),_c('v-dialog',{attrs:{"max-width":"500px","scrollable":""},model:{value:(_vm.modal),callback:function ($$v) {_vm.modal=$$v},expression:"modal"}},[_c('v-card',[_c('v-toolbar',{attrs:{"card":"","dark":"","color":"primary"}},[_c('v-btn',{attrs:{"icon":"","dark":""},on:{"click":function($event){_vm.modal = false}}},[_c('v-icon',[_vm._v("close")])],1),_vm._v("\n          Создание новой страницы\n      ")],1),_c('v-card-text',[_c('create',{attrs:{"func-ok":_vm.createPage,"prop-site":_vm.createSite,"prop-lang":_vm.createLang,"prop-category":_vm.createType,"settings":_vm.createSettings}})],1)],1)],1)],1)}
+// CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js?{"cacheDirectory":"node_modules/.cache/vue-loader","cacheIdentifier":"572ea87a-vue-loader-template"}!./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./src/components/mainComponent.vue?vue&type=template&id=5127d3de&scoped=true&
+var render = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',[_c('choose',{attrs:{"prop-site":_vm.siteProp,"func-ok":_vm.choosePage,"func-create":_vm.openCreatePopup}}),_c('builder',{attrs:{"site":_vm.siteProp,"lang":_vm.lang,"type":_vm.type,"id":_vm.id,"filestore":_vm.filestore,"prop-list-components":_vm.listComponents}}),_c('v-dialog',{attrs:{"max-width":"500px","scrollable":""},model:{value:(_vm.modal),callback:function ($$v) {_vm.modal=$$v},expression:"modal"}},[_c('v-card',[_c('v-toolbar',{attrs:{"card":"","dark":"","color":"primary"}},[_c('v-btn',{attrs:{"icon":"","dark":""},on:{"click":function($event){_vm.modal = false}}},[_c('v-icon',[_vm._v("close")])],1),_vm._v("\n          Создание новой страницы\n      ")],1),_c('v-card-text',[_c('create',{attrs:{"func-ok":_vm.createPage,"prop-site":_vm.createSite,"prop-lang":_vm.createLang,"prop-category":_vm.createType,"settings":_vm.createSettings}})],1)],1)],1)],1)}
 var staticRenderFns = []
 
 
-// CONCATENATED MODULE: ./src/components/mainComponent.vue?vue&type=template&id=37741ac9&scoped=true&
+// CONCATENATED MODULE: ./src/components/mainComponent.vue?vue&type=template&id=5127d3de&scoped=true&
 
-// CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js?{"cacheDirectory":"node_modules/.cache/vue-loader","cacheIdentifier":"00c85710-vue-loader-template"}!./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./src/components/builder.vue?vue&type=template&id=6709c320&scoped=true&
-var buildervue_type_template_id_6709c320_scoped_true_render = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return (_vm.id)?_c('div',[_c('v-btn',{staticClass:"green",attrs:{"dark":""},on:{"click":function($event){$event.preventDefault();return _vm.savePage()}}},[_vm._v("Save")]),_c('v-btn',{staticClass:"orange",attrs:{"dark":""},on:{"click":function($event){_vm.modal = true}}},[_vm._v("Metatags & url page")]),_c('v-dialog',{attrs:{"max-width":"500px","scrollable":""},model:{value:(_vm.modal),callback:function ($$v) {_vm.modal=$$v},expression:"modal"}},[_c('v-card',[_c('v-toolbar',{attrs:{"card":"","dark":"","color":"primary"}},[_c('v-btn',{attrs:{"icon":"","dark":""},on:{"click":function($event){_vm.modal = false}}},[_c('v-icon',[_vm._v("close")])],1)],1),_c('v-card-text',[_c('v-text-field',{attrs:{"label":"Title Page"},model:{value:(_vm.title),callback:function ($$v) {_vm.title=$$v},expression:"title"}}),_c('v-text-field',{attrs:{"label":"Description Page"},model:{value:(_vm.description),callback:function ($$v) {_vm.description=$$v},expression:"description"}}),_c('div',[_c('v-text-field',{attrs:{"label":(_vm.lang=='en' ? 'www' : _vm.lang ) + '.' + _vm.site + '.com/'+_vm.type+'/'},model:{value:(_vm.path),callback:function ($$v) {_vm.path=$$v},expression:"path"}})],1)],1)],1)],1),_vm._l((_vm.obj),function(item,i){return _c('div',{key:i,staticClass:"component-wrapper"},[_c('wrapper',{attrs:{"strings":_vm.strings,"obj":item,"site":_vm.site}}),_c('div',{staticClass:"component-overlay"},[_c('v-btn',{staticStyle:{"position":"absolute","bottom":"-20px","z-index":"2"},attrs:{"fab":"","small":"","dark":"","color":"orange"},on:{"click":function($event){$event.preventDefault();return _vm.openChooseComponentModal(i)}}},[_c('v-icon',{attrs:{"dark":""}},[_vm._v("add")])],1),_c('v-btn',{attrs:{"fab":"","small":"","dark":"","color":"green"},on:{"click":function($event){$event.preventDefault();_vm.obj[i].edit = true}}},[_c('v-icon',{attrs:{"dark":""}},[_vm._v("mode_edit")])],1),_c('v-btn',{directives:[{name:"show",rawName:"v-show",value:(i > 0),expression:"i > 0"}],attrs:{"fab":"","small":"","dark":"","color":"blue"},on:{"click":function($event){$event.preventDefault();return _vm.switchComponents(i-1, i)}}},[_c('v-icon',{attrs:{"dark":""}},[_vm._v("keyboard_arrow_up")])],1),_c('v-btn',{directives:[{name:"show",rawName:"v-show",value:(_vm.obj.length-1 > i),expression:"obj.length-1 > i"}],attrs:{"fab":"","small":"","dark":"","color":"blue"},on:{"click":function($event){$event.preventDefault();return _vm.switchComponents(i, i+1)}}},[_c('v-icon',{attrs:{"dark":""}},[_vm._v("keyboard_arrow_down")])],1),_c('v-btn',{staticStyle:{"margin-left":"auto"},attrs:{"fab":"","small":"","dark":"","color":"error"},on:{"click":function($event){$event.preventDefault();return _vm.deleteComponent(i)}}},[_c('v-icon',{attrs:{"dark":""}},[_vm._v("close")])],1)],1),_c('v-dialog',{attrs:{"max-width":"900px","persistent":"","lazy":"","scrollable":""},model:{value:(_vm.obj[i].edit),callback:function ($$v) {_vm.$set(_vm.obj[i], "edit", $$v)},expression:"obj[i].edit"}},[_c('v-card',{attrs:{"tile":""}},[_c('v-toolbar',{attrs:{"card":"","dark":"","color":"primary"}},[_c('v-btn',{attrs:{"icon":"","dark":""},on:{"click":function($event){_vm.obj[i].edit = false}}},[_c('v-icon',[_vm._v("close")])],1)],1),_c('v-card-text',[_c('h3',[_vm._v("Checkboxes")]),_vm._l((item.props.boolean),function(elem,b){return _c('v-switch',{key:b,staticStyle:{"display":"inline-block","margin-right":"30px"},attrs:{"label":b},model:{value:(_vm.obj[i].props.boolean[b]),callback:function ($$v) {_vm.$set(_vm.obj[i].props.boolean, b, $$v)},expression:"obj[i].props.boolean[b]"}})}),_c('h3',{staticStyle:{"margin-top":"30px"}},[_vm._v("Strings")]),_vm._l((item.props.string),function(elem,s){return _c('v-text-field',{key:s,attrs:{"label":s},model:{value:(_vm.strings[_vm.obj[i].props.string[s]]),callback:function ($$v) {_vm.$set(_vm.strings, _vm.obj[i].props.string[s], $$v)},expression:"strings[obj[i].props.string[s]]"}})}),_c('h3',{staticStyle:{"margin-top":"30px"}},[_vm._v("Texts")]),_vm._l((item.props.editor),function(elem,e){return _c('editor',{key:e,model:{value:(_vm.strings[elem]),callback:function ($$v) {_vm.$set(_vm.strings, elem, $$v)},expression:"strings[elem]"}})}),_c('h3',{staticStyle:{"margin-top":"30px"}},[_vm._v("Links")]),_vm._l((item.props.links),function(elem,l){return _c('v-text-field',{key:l,attrs:{"label":l},model:{value:(_vm.obj[i].props.boolean[l]),callback:function ($$v) {_vm.$set(_vm.obj[i].props.boolean, l, $$v)},expression:"obj[i].props.boolean[l]"}})}),_c('h3',{staticStyle:{"margin-top":"30px"}},[_vm._v("Imgs")]),_vm._l((item.props.imgs),function(elem,im){return _c('v-layout',{key:im,attrs:{"row":"","wrap":""}},[_c('v-flex',{attrs:{"xs8":"","sm10":"","md10":""}},[_c('v-text-field',{attrs:{"disabled":"","label":im},model:{value:(_vm.obj[i].props.imgs[im]),callback:function ($$v) {_vm.$set(_vm.obj[i].props.imgs, im, $$v)},expression:"obj[i].props.imgs[im]"}})],1),_c('v-btn',{attrs:{"fab":"","small":"","dark":"","color":"green"},on:{"click":function($event){return _vm.openDownload(i, im, _vm.size)}}},[_c('v-icon',{attrs:{"dark":""}},[_vm._v("add")])],1)],1)})],2)],1)],1)],1)}),_c('v-dialog',{attrs:{"max-width":"900px","scrollable":""},model:{value:(_vm.modalComponents),callback:function ($$v) {_vm.modalComponents=$$v},expression:"modalComponents"}},[_c('v-card',[_c('v-toolbar',{attrs:{"card":"","dark":"","color":"primary"}},[_c('v-btn',{attrs:{"icon":"","dark":""},on:{"click":function($event){_vm.modalComponents = false}}},[_c('v-icon',[_vm._v("close")])],1)],1),_c('v-card-text',_vm._l((_vm.listComponents),function(item,i){return _c('div',{key:i},[_c(_vm.site + "-" +item.name,{tag:"component"}),_c('v-btn',{staticStyle:{"margin":"10px auto 30px","display":"block"},on:{"click":function($event){return _vm.chooseComponent(item.name)}}},[_vm._v("Выбрать")])],1)}),0)],1)],1),_c('download',{attrs:{"size":_vm.size,"site":_vm.site,"lang":_vm.lang,"type":_vm.type,"id":_vm.id,"func-ok":_vm.uploadImg},model:{value:(_vm.modalDownload),callback:function ($$v) {_vm.modalDownload=$$v},expression:"modalDownload"}}),_c('v-btn',{directives:[{name:"show",rawName:"v-show",value:(_vm.obj.length == 0),expression:"obj.length == 0"}],staticStyle:{"display":"block","margin":"0 auto"},attrs:{"fab":"","dark":"","color":"indigo"},on:{"click":function($event){$event.preventDefault();return _vm.openChooseComponentModal(0)}}},[_c('v-icon',{attrs:{"dark":""}},[_vm._v("add")])],1)],2):_vm._e()}
-var buildervue_type_template_id_6709c320_scoped_true_staticRenderFns = []
+// CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js?{"cacheDirectory":"node_modules/.cache/vue-loader","cacheIdentifier":"572ea87a-vue-loader-template"}!./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./src/components/builder.vue?vue&type=template&id=5e1266bd&scoped=true&
+var buildervue_type_template_id_5e1266bd_scoped_true_render = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return (_vm.id)?_c('div',[_c('v-btn',{staticClass:"green",attrs:{"dark":""},on:{"click":function($event){$event.preventDefault();return _vm.savePage()}}},[_vm._v("Save")]),_c('v-btn',{staticClass:"orange",attrs:{"dark":""},on:{"click":function($event){_vm.modal = true}}},[_vm._v("Metatags & url page")]),_c('v-dialog',{attrs:{"max-width":"500px","scrollable":""},model:{value:(_vm.modal),callback:function ($$v) {_vm.modal=$$v},expression:"modal"}},[_c('v-card',[_c('v-toolbar',{attrs:{"card":"","dark":"","color":"primary"}},[_c('v-btn',{attrs:{"icon":"","dark":""},on:{"click":function($event){_vm.modal = false}}},[_c('v-icon',[_vm._v("close")])],1)],1),_c('v-card-text',[_c('v-text-field',{attrs:{"label":"Title Page"},model:{value:(_vm.title),callback:function ($$v) {_vm.title=$$v},expression:"title"}}),_c('v-text-field',{attrs:{"label":"Description Page"},model:{value:(_vm.description),callback:function ($$v) {_vm.description=$$v},expression:"description"}}),_c('div',{staticStyle:{"display":"flex"}},[_c('v-flex',{attrs:{"xs10":"","sm10":"","md10":""}},[_c('v-text-field',{attrs:{"disabled":"","label":"Prev page (.jpg)"},model:{value:(_vm.img),callback:function ($$v) {_vm.img=$$v},expression:"img"}})],1),_c('v-flex',{attrs:{"xs2":"","sm2":"","md2":""}},[_c('v-btn',{attrs:{"fab":"","small":"","dark":"","color":"green"},on:{"click":function($event){return _vm.openDownload(null, null, 300, 'meta')}}},[_c('v-icon',{attrs:{"dark":""}},[_vm._v("add")])],1)],1)],1),_c('div',[_c('v-text-field',{attrs:{"label":(_vm.lang=='en' ? 'www' : _vm.lang ) + '.' + _vm.site + '.com/'+_vm.type+'/'},model:{value:(_vm.path),callback:function ($$v) {_vm.path=$$v},expression:"path"}})],1)],1)],1)],1),_vm._l((_vm.obj),function(item,i){return _c('div',{key:i,staticClass:"component-wrapper"},[_c('wrapper',{attrs:{"strings":_vm.strings,"obj":item,"site":_vm.site,"filestore":_vm.filestore}}),_c('div',{staticClass:"component-overlay"},[_c('v-btn',{staticStyle:{"position":"absolute","bottom":"-20px","z-index":"2"},attrs:{"fab":"","small":"","dark":"","color":"orange"},on:{"click":function($event){$event.preventDefault();return _vm.openChooseComponentModal(i)}}},[_c('v-icon',{attrs:{"dark":""}},[_vm._v("add")])],1),_c('v-btn',{attrs:{"fab":"","small":"","dark":"","color":"green"},on:{"click":function($event){$event.preventDefault();_vm.obj[i].edit = true}}},[_c('v-icon',{attrs:{"dark":""}},[_vm._v("mode_edit")])],1),_c('v-btn',{directives:[{name:"show",rawName:"v-show",value:(i > 0),expression:"i > 0"}],attrs:{"fab":"","small":"","dark":"","color":"blue"},on:{"click":function($event){$event.preventDefault();return _vm.switchComponents(i-1, i)}}},[_c('v-icon',{attrs:{"dark":""}},[_vm._v("keyboard_arrow_up")])],1),_c('v-btn',{directives:[{name:"show",rawName:"v-show",value:(_vm.obj.length-1 > i),expression:"obj.length-1 > i"}],attrs:{"fab":"","small":"","dark":"","color":"blue"},on:{"click":function($event){$event.preventDefault();return _vm.switchComponents(i, i+1)}}},[_c('v-icon',{attrs:{"dark":""}},[_vm._v("keyboard_arrow_down")])],1),_c('v-btn',{staticStyle:{"margin-left":"auto"},attrs:{"fab":"","small":"","dark":"","color":"error"},on:{"click":function($event){$event.preventDefault();return _vm.deleteComponent(i)}}},[_c('v-icon',{attrs:{"dark":""}},[_vm._v("close")])],1)],1),_c('v-dialog',{attrs:{"max-width":"900px","persistent":"","lazy":"","scrollable":""},model:{value:(_vm.obj[i].edit),callback:function ($$v) {_vm.$set(_vm.obj[i], "edit", $$v)},expression:"obj[i].edit"}},[_c('v-card',{attrs:{"tile":""}},[_c('v-toolbar',{attrs:{"card":"","dark":"","color":"primary"}},[_c('v-btn',{attrs:{"icon":"","dark":""},on:{"click":function($event){_vm.obj[i].edit = false}}},[_c('v-icon',[_vm._v("close")])],1)],1),_c('v-card-text',[_c('h3',[_vm._v("Checkboxes")]),_vm._l((item.props.boolean),function(elem,b){return _c('v-switch',{key:b,staticStyle:{"display":"inline-block","margin-right":"30px"},attrs:{"label":b},model:{value:(_vm.obj[i].props.boolean[b]),callback:function ($$v) {_vm.$set(_vm.obj[i].props.boolean, b, $$v)},expression:"obj[i].props.boolean[b]"}})}),_c('h3',{staticStyle:{"margin-top":"30px"}},[_vm._v("Strings")]),_vm._l((item.props.string),function(elem,s){return _c('v-text-field',{key:s,attrs:{"label":s},model:{value:(_vm.strings[_vm.obj[i].props.string[s]]),callback:function ($$v) {_vm.$set(_vm.strings, _vm.obj[i].props.string[s], $$v)},expression:"strings[obj[i].props.string[s]]"}})}),_c('h3',{staticStyle:{"margin-top":"30px"}},[_vm._v("Texts")]),_vm._l((item.props.editor),function(elem,e){return _c('editor',{key:e,model:{value:(_vm.strings[elem]),callback:function ($$v) {_vm.$set(_vm.strings, elem, $$v)},expression:"strings[elem]"}})}),_c('h3',{staticStyle:{"margin-top":"30px"}},[_vm._v("Links")]),_vm._l((item.props.links),function(elem,l){return _c('v-text-field',{key:l,attrs:{"label":l},model:{value:(_vm.obj[i].props.links[l]),callback:function ($$v) {_vm.$set(_vm.obj[i].props.links, l, $$v)},expression:"obj[i].props.links[l]"}})}),_c('h3',{staticStyle:{"margin-top":"30px"}},[_vm._v("Imgs")]),_vm._l((item.props.imgs),function(elem,im){return _c('v-layout',{key:im,attrs:{"row":"","wrap":""}},[_c('v-flex',{attrs:{"xs8":"","sm10":"","md10":""}},[_c('v-text-field',{attrs:{"disabled":"","label":im},model:{value:(_vm.obj[i].props.imgs[im]),callback:function ($$v) {_vm.$set(_vm.obj[i].props.imgs, im, $$v)},expression:"obj[i].props.imgs[im]"}})],1),_c('v-btn',{attrs:{"fab":"","small":"","dark":"","color":"green"},on:{"click":function($event){return _vm.openDownload(i, im, _vm.size, false)}}},[_c('v-icon',{attrs:{"dark":""}},[_vm._v("add")])],1)],1)})],2)],1)],1)],1)}),_c('v-dialog',{attrs:{"max-width":"900px","scrollable":""},model:{value:(_vm.modalComponents),callback:function ($$v) {_vm.modalComponents=$$v},expression:"modalComponents"}},[_c('v-card',[_c('v-toolbar',{attrs:{"card":"","dark":"","color":"primary"}},[_c('v-btn',{attrs:{"icon":"","dark":""},on:{"click":function($event){_vm.modalComponents = false}}},[_c('v-icon',[_vm._v("close")])],1)],1),_c('v-card-text',_vm._l((_vm.listComponents),function(item,i){return _c('div',{key:i},[_c(_vm.site + "-" +item.name,{tag:"component"}),_c('v-btn',{staticStyle:{"margin":"10px auto 30px","display":"block"},on:{"click":function($event){return _vm.chooseComponent(item.name)}}},[_vm._v("Выбрать")])],1)}),0)],1)],1),_c('download',{attrs:{"size":_vm.size,"site":_vm.site,"lang":_vm.lang,"type":_vm.type,"id":_vm.id,"filestore":_vm.filestore,"func-ok":_vm.uploadMetaImg ? _vm.uploadPreviewImg : _vm.uploadImg},model:{value:(_vm.modalDownload),callback:function ($$v) {_vm.modalDownload=$$v},expression:"modalDownload"}}),_c('v-btn',{directives:[{name:"show",rawName:"v-show",value:(_vm.obj.length == 0),expression:"obj.length == 0"}],staticStyle:{"display":"block","margin":"0 auto"},attrs:{"fab":"","dark":"","color":"indigo"},on:{"click":function($event){$event.preventDefault();return _vm.openChooseComponentModal(0)}}},[_c('v-icon',{attrs:{"dark":""}},[_vm._v("add")])],1)],2):_vm._e()}
+var buildervue_type_template_id_5e1266bd_scoped_true_staticRenderFns = []
 
 
-// CONCATENATED MODULE: ./src/components/builder.vue?vue&type=template&id=6709c320&scoped=true&
+// CONCATENATED MODULE: ./src/components/builder.vue?vue&type=template&id=5e1266bd&scoped=true&
 
 // EXTERNAL MODULE: ./node_modules/core-js/modules/es6.function.name.js
 var es6_function_name = __webpack_require__("7f7f");
@@ -7496,8 +7575,9 @@ var runtime = __webpack_require__("96cf");
 
 // EXTERNAL MODULE: ./node_modules/@babel/runtime-corejs2/core-js/promise.js
 var promise = __webpack_require__("795b");
+var promise_default = /*#__PURE__*/__webpack_require__.n(promise);
 
-// CONCATENATED MODULE: ./node_modules/@babel/runtime-corejs2/helpers/asyncToGenerator/_index.mjs
+// CONCATENATED MODULE: ./node_modules/@babel/runtime-corejs2/helpers/esm/asyncToGenerator.js
 
 
 function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) {
@@ -7512,7 +7592,7 @@ function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) {
   if (info.done) {
     resolve(value);
   } else {
-    promise.resolve(value).then(_next, _throw);
+    promise_default.a.resolve(value).then(_next, _throw);
   }
 }
 
@@ -7520,7 +7600,7 @@ function _asyncToGenerator(fn) {
   return function () {
     var self = this,
         args = arguments;
-    return new promise(function (resolve, reject) {
+    return new promise_default.a(function (resolve, reject) {
       var gen = fn.apply(self, args);
 
       function _next(value) {
@@ -7535,10 +7615,8 @@ function _asyncToGenerator(fn) {
     });
   };
 }
-// CONCATENATED MODULE: ./node_modules/@babel/runtime-corejs2/helpers/esm/asyncToGenerator.js
-
-// CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js?{"cacheDirectory":"node_modules/.cache/vue-loader","cacheIdentifier":"00c85710-vue-loader-template"}!./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./src/components/editor.vue?vue&type=template&id=7f682e2f&
-var editorvue_type_template_id_7f682e2f_render = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"editor"},[_c('editor-menu-bar',{attrs:{"editor":_vm.editor},scopedSlots:_vm._u([{key:"default",fn:function(ref){
+// CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js?{"cacheDirectory":"node_modules/.cache/vue-loader","cacheIdentifier":"572ea87a-vue-loader-template"}!./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./src/components/editor.vue?vue&type=template&id=4befd822&
+var editorvue_type_template_id_4befd822_render = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"editor"},[_c('editor-menu-bar',{attrs:{"editor":_vm.editor},scopedSlots:_vm._u([{key:"default",fn:function(ref){
 var commands = ref.commands;
 var isActive = ref.isActive;
 return [_c('div',{staticClass:"menubar"},[_c('button',{staticClass:"menubar__button",class:{ 'is-active': isActive.bold() },on:{"click":commands.bold}},[_c('icon',{attrs:{"name":"bold"}})],1),_c('button',{staticClass:"menubar__button",class:{ 'is-active': isActive.italic() },on:{"click":commands.italic}},[_c('icon',{attrs:{"name":"italic"}})],1),_c('button',{staticClass:"menubar__button",class:{ 'is-active': isActive.strike() },on:{"click":commands.strike}},[_c('icon',{attrs:{"name":"strike"}})],1),_c('button',{staticClass:"menubar__button",class:{ 'is-active': isActive.underline() },on:{"click":commands.underline}},[_c('icon',{attrs:{"name":"underline"}})],1),_c('button',{staticClass:"menubar__button",class:{ 'is-active': isActive.code() },on:{"click":commands.code}},[_c('icon',{attrs:{"name":"code"}})],1),_c('button',{staticClass:"menubar__button",class:{ 'is-active': isActive.heading({ level: 2 }) },on:{"click":function($event){return commands.heading({ level: 2 })}}},[_vm._v("H2\n      ")]),_c('button',{staticClass:"menubar__button",class:{ 'is-active': isActive.heading({ level: 3 }) },on:{"click":function($event){return commands.heading({ level: 3 })}}},[_vm._v("H3\n      ")]),_c('button',{staticClass:"menubar__button",class:{ 'is-active': isActive.bullet_list() },on:{"click":commands.bullet_list}},[_c('icon',{attrs:{"name":"ul"}})],1),_c('button',{staticClass:"menubar__button",class:{ 'is-active': isActive.ordered_list() },on:{"click":commands.ordered_list}},[_c('icon',{attrs:{"name":"ol"}})],1),_c('button',{staticClass:"menubar__button",class:{ 'is-active': isActive.blockquote() },on:{"click":commands.blockquote}},[_c('icon',{attrs:{"name":"quote"}})],1),_c('button',{staticClass:"menubar__button",class:{ 'is-active': isActive.code_block() },on:{"click":commands.code_block}},[_c('icon',{attrs:{"name":"code"}})],1),_c('button',{staticClass:"menubar__button",on:{"click":commands.horizontal_rule}},[_c('icon',{attrs:{"name":"hr"}})],1),_c('button',{staticClass:"menubar__button",on:{"click":commands.undo}},[_c('icon',{attrs:{"name":"undo"}})],1),_c('button',{staticClass:"menubar__button",on:{"click":commands.redo}},[_c('icon',{attrs:{"name":"redo"}})],1),_c('button',{staticClass:"menubar__button",on:{"click":function($event){return _vm.showImagePrompt(commands.image)}}},[_c('icon',{attrs:{"name":"image"}})],1),_c('editor-menu-bubble',{staticClass:"menububble",attrs:{"editor":_vm.editor},on:{"hide":_vm.hideLinkMenu},scopedSlots:_vm._u([{key:"default",fn:function(ref){
@@ -7547,12 +7625,12 @@ var isActive = ref.isActive;
 var getMarkAttrs = ref.getMarkAttrs;
 var menu = ref.menu;
 return [_c('div',{staticClass:"menububble",class:{ 'is-active': menu.isActive },style:(("left: " + (menu.left) + "px; bottom: " + (menu.bottom) + "px;"))},[(_vm.linkMenuIsActive)?_c('form',{staticClass:"menububble__form",on:{"submit":function($event){$event.preventDefault();return _vm.setLinkUrl(commands.link, _vm.linkUrl)}}},[_c('input',{directives:[{name:"model",rawName:"v-model",value:(_vm.linkUrl),expression:"linkUrl"}],ref:"linkInput",staticClass:"menububble__input",attrs:{"type":"text","placeholder":"https://"},domProps:{"value":(_vm.linkUrl)},on:{"keydown":function($event){if(!$event.type.indexOf('key')&&_vm._k($event.keyCode,"esc",27,$event.key,["Esc","Escape"])){ return null; }return _vm.hideLinkMenu($event)},"input":function($event){if($event.target.composing){ return; }_vm.linkUrl=$event.target.value}}}),_c('button',{staticClass:"menububble__button",attrs:{"type":"button"},on:{"click":function($event){return _vm.setLinkUrl(commands.link, null)}}},[_c('icon',{attrs:{"name":"remove"}})],1)]):[_c('button',{staticClass:"menububble__button",class:{ 'is-active': isActive.link() },on:{"click":function($event){_vm.showLinkMenu(getMarkAttrs('link'))}}},[_c('span',[_vm._v(_vm._s(isActive.link() ? 'Update Link' : 'Add Link'))]),_c('icon',{attrs:{"name":"link"}})],1)]],2)]}}],null,true)})],1)]}}])}),_c('editor-content',{staticClass:"editor__content",attrs:{"editor":_vm.editor}})],1)}
-var editorvue_type_template_id_7f682e2f_staticRenderFns = []
+var editorvue_type_template_id_4befd822_staticRenderFns = []
 
 
-// CONCATENATED MODULE: ./src/components/editor.vue?vue&type=template&id=7f682e2f&
+// CONCATENATED MODULE: ./src/components/editor.vue?vue&type=template&id=4befd822&
 
-// CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js?{"cacheDirectory":"node_modules/.cache/vue-loader","cacheIdentifier":"00c85710-vue-loader-template"}!./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./src/components/icon.vue?vue&type=template&id=d7bbd288&scoped=true&
+// CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js?{"cacheDirectory":"node_modules/.cache/vue-loader","cacheIdentifier":"572ea87a-vue-loader-template"}!./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./src/components/icon.vue?vue&type=template&id=d7bbd288&scoped=true&
 var iconvue_type_template_id_d7bbd288_scoped_true_render = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"icon",class:[("icon--" + _vm.name), ("icon--" + _vm.size), { 'has-align-fix': _vm.fixAlign }]},[_c('img',{staticClass:"icon__svg",class:[("icon--" + _vm.name), ("icon--" + _vm.size), { 'has-align-fix': _vm.fixAlign }],attrs:{"src":'/images/icons/' + _vm.name + '.svg',"alt":""}})])}
 var iconvue_type_template_id_d7bbd288_scoped_true_staticRenderFns = []
 
@@ -7939,7 +8017,9 @@ Fragment.prototype.descendants = function descendants (f) {
   this.nodesBetween(0, this.size, f);
 };
 
-// : (number, number, ?string, ?string) → string
+// :: (number, number, ?string, ?string) → string
+// Extract the text between `from` and `to`. See the same method on
+// [`Node`](#model.Node.textBetween).
 Fragment.prototype.textBetween = function textBetween (from, to, blockSeparator, leafText) {
   var text = "", separated = true;
   this.nodesBetween(from, to, function (node, pos) {
@@ -9175,6 +9255,10 @@ Node.prototype.canAppend = function canAppend (other) {
 Node.prototype.check = function check () {
   if (!this.type.validContent(this.content))
     { throw new RangeError(("Invalid content for node " + (this.type.name) + ": " + (this.content.toString().slice(0, 50)))) }
+  var copy = Mark.none;
+  for (var i = 0; i < this.marks.length; i++) { copy = this.marks[i].addToSet(copy); }
+  if (!Mark.sameSet(copy, this.marks))
+    { throw new RangeError(("Invalid collection of marks for node " + (this.type.name) + ": " + (this.marks.map(function (m) { return m.type.name; })))) }
   this.content.forEach(function (node) { return node.check(); });
 };
 
@@ -10687,6 +10771,8 @@ ParseContext.prototype.addTextNode = function addTextNode (dom) {
       }
     } else if (!(top.options & OPT_PRESERVE_WS_FULL)) {
       value = value.replace(/\r?\n|\r/g, " ");
+    } else {
+      value = value.replace(/\r\n?/g, "\n");
     }
     if (value) { this.insertNode(this.parser.schema.text(value)); }
     this.findInText(dom);
@@ -10705,6 +10791,7 @@ ParseContext.prototype.addElement = function addElement (dom, matchAfter) {
       (ruleID = this.parser.matchTag(dom, this, matchAfter));
   if (rule ? rule.ignore : ignoreTags.hasOwnProperty(name)) {
     this.findInside(dom);
+    this.ignoreFallback(dom);
   } else if (!rule || rule.skip || rule.closeParent) {
     if (rule && rule.closeParent) { this.open = Math.max(0, this.open - 1); }
     else if (rule && rule.skip.nodeType) { dom = rule.skip; }
@@ -10728,6 +10815,13 @@ ParseContext.prototype.addElement = function addElement (dom, matchAfter) {
 ParseContext.prototype.leafFallback = function leafFallback (dom) {
   if (dom.nodeName == "BR" && this.top.type && this.top.type.inlineContent)
     { this.addTextNode(dom.ownerDocument.createTextNode("\n")); }
+};
+
+// Called for ignored nodes
+ParseContext.prototype.ignoreFallback = function ignoreFallback (dom) {
+  // Ignored BR nodes should at least create an inline context
+  if (dom.nodeName == "BR" && (!this.top.type || !this.top.type.inlineContent))
+    { this.findPlace(this.parser.schema.text("-")); }
 };
 
 // Run any style parser associated with the node's styles. Either
@@ -11724,8 +11818,14 @@ StepResult.fromReplace = function fromReplace (doc, from, to, slice) {
 var index_es_ReplaceStep = /*@__PURE__*/(function (Step) {
   function ReplaceStep(from, to, slice, structure) {
     Step.call(this);
+    // :: number
+    // The start position of the replaced range.
     this.from = from;
+    // :: number
+    // The end position of the replaced range.
     this.to = to;
+    // :: Slice
+    // The slice to insert.
     this.slice = slice;
     this.structure = !!structure;
   }
@@ -11794,11 +11894,24 @@ index_es_Step.jsonID("replace", index_es_ReplaceStep);
 var index_es_ReplaceAroundStep = /*@__PURE__*/(function (Step) {
   function ReplaceAroundStep(from, to, gapFrom, gapTo, slice, insert, structure) {
     Step.call(this);
+    // :: number
+    // The start position of the replaced range.
     this.from = from;
+    // :: number
+    // The end position of the replaced range.
     this.to = to;
+    // :: number
+    // The start of preserved range.
     this.gapFrom = gapFrom;
+    // :: number
+    // The end of preserved range.
     this.gapTo = gapTo;
+    // :: Slice
+    // The slice to insert.
     this.slice = slice;
+    // :: number
+    // The position in the slice where the preserved range should be
+    // inserted.
     this.insert = insert;
     this.structure = !!structure;
   }
@@ -12170,9 +12283,14 @@ function dropPoint(doc, pos, slice) {
     for (var d = $pos.depth; d >= 0; d--) {
       var bias = d == $pos.depth ? 0 : $pos.pos <= ($pos.start(d + 1) + $pos.end(d + 1)) / 2 ? -1 : 1;
       var insertPos = $pos.index(d) + (bias > 0 ? 1 : 0);
-      if (pass == 1
-          ? $pos.node(d).canReplace(insertPos, insertPos, content)
-          : $pos.node(d).contentMatchAt(insertPos).findWrapping(content.firstChild.type))
+      var parent = $pos.node(d), fits = false;
+      if (pass == 1) {
+        fits = parent.canReplace(insertPos, insertPos, content);
+      } else {
+        var wrapping = parent.contentMatchAt(insertPos).findWrapping(content.firstChild.type);
+        fits = wrapping && parent.canReplaceWith(insertPos, insertPos, wrapping[0]);
+      }
+      if (fits)
         { return bias == 0 ? $pos.pos : bias < 0 ? $pos.before(d + 1) : $pos.after(d + 1) }
     }
   }
@@ -12194,8 +12312,14 @@ function mapFragment(fragment, f, parent) {
 var index_es_AddMarkStep = /*@__PURE__*/(function (Step) {
   function AddMarkStep(from, to, mark) {
     Step.call(this);
+    // :: number
+    // The start of the marked range.
     this.from = from;
+    // :: number
+    // The end of the marked range.
     this.to = to;
+    // :: Mark
+    // The mark to add.
     this.mark = mark;
   }
 
@@ -12253,8 +12377,14 @@ index_es_Step.jsonID("addMark", index_es_AddMarkStep);
 var index_es_RemoveMarkStep = /*@__PURE__*/(function (Step) {
   function RemoveMarkStep(from, to, mark) {
     Step.call(this);
+    // :: number
+    // The start of the unmarked range.
     this.from = from;
+    // :: number
+    // The end of the unmarked range.
     this.to = to;
+    // :: Mark
+    // The mark to remove.
     this.mark = mark;
   }
 
@@ -12860,7 +12990,7 @@ index_es_Transform.prototype.replaceRange = function(from, to, slice) {
     this.replace(from, to, slice);
     if (this.steps.length > startSteps) { break }
     var depth = targetDepths[i$2];
-    if (i$2 < 0) { continue }
+    if (depth < 0) { continue }
     from = $from.before(depth); to = $to.after(depth);
   }
   return this
@@ -14200,9 +14330,12 @@ function getSide(value, side) {
 
 function clientRect(node) {
   var rect = node.getBoundingClientRect();
+  // Adjust for elements with style "transform: scale()"
+  var scaleX = (rect.width / node.offsetWidth) || 1;
+  var scaleY = (rect.height / node.offsetHeight) || 1;
   // Make sure scrollbar width isn't included in the rectangle
-  return {left: rect.left, right: rect.left + node.clientWidth,
-          top: rect.top, bottom: rect.top + node.clientHeight}
+  return {left: rect.left, right: rect.left + node.clientWidth * scaleX,
+          top: rect.top, bottom: rect.top + node.clientHeight * scaleY}
 }
 
 function scrollRectIntoView(view, rect, startDOM) {
@@ -14678,15 +14811,17 @@ function endOfTextblock(view, state, dir) {
 //   is not present, the node view itself is responsible for rendering
 //   (or deciding not to render) its child nodes.
 //
-//   update:: ?(node: Node, decorations: [Decoration]) → bool
+//   update:: ?(node: Node, decorations: [Decoration], innerDecorations: DecorationSource) → bool
 //   When given, this will be called when the view is updating itself.
-//   It will be given a node (possibly of a different type), and an
-//   array of active decorations (which are automatically drawn, and
-//   the node view may ignore if it isn't interested in them), and
-//   should return true if it was able to update to that node, and
-//   false otherwise. If the node view has a `contentDOM` property (or
-//   no `dom` property), updating its child nodes will be handled by
-//   ProseMirror.
+//   It will be given a node (possibly of a different type), an array
+//   of active decorations around the node (which are automatically
+//   drawn, and the node view may ignore if it isn't interested in
+//   them), and a [decoration source](#view.DecorationSource) that
+//   represents any decorations that apply to the content of the node
+//   (which again may be ignored). It should return true if it was
+//   able to update to that node, and false otherwise. If the node
+//   view has a `contentDOM` property (or no `dom` property), updating
+//   its child nodes will be handled by ProseMirror.
 //
 //   selectNode:: ?()
 //   Can be used to override the way the node's selected status (as a
@@ -14847,7 +14982,9 @@ index_es_ViewDesc.prototype.localPosFromDOM = function localPosFromDOM (dom, off
   // parameter, to determine whether to return the position at the
   // start or at the end of this view desc.
   var atEnd;
-  if (this.contentDOM && this.contentDOM != this.dom && this.dom.contains(this.contentDOM)) {
+  if (dom == this.dom && this.contentDOM) {
+    atEnd = offset > domIndex(this.contentDOM);
+  } else if (this.contentDOM && this.contentDOM != this.dom && this.dom.contains(this.contentDOM)) {
     atEnd = dom.compareDocumentPosition(this.contentDOM) & 2;
   } else if (this.dom.firstChild) {
     if (offset == 0) { for (var search = dom;; search = search.parentNode) {
@@ -15288,7 +15425,7 @@ var index_es_NodeViewDesc = /*@__PURE__*/(function (ViewDesc) {
       // own position)
       if (!descObj) { return pos }
       if (descObj.parent) { return descObj.parent.posBeforeChild(descObj) }
-    }, outerDeco);
+    }, outerDeco, innerDeco);
 
     var dom = spec && spec.dom, contentDOM = spec && spec.contentDOM;
     if (node.isText) {
@@ -15427,7 +15564,7 @@ var index_es_NodeViewDesc = /*@__PURE__*/(function (ViewDesc) {
     this.children = replaceNodes(this.children, pos, pos + text.length, view, desc);
   };
 
-  // : (Node, [Decoration], DecorationSet, EditorView) → bool
+  // : (Node, [Decoration], DecorationSource, EditorView) → bool
   // If this desc be updated to match the given node decoration,
   // do so and return true.
   NodeViewDesc.prototype.update = function update (node, outerDeco, innerDeco, view) {
@@ -15587,7 +15724,7 @@ var CustomNodeViewDesc = /*@__PURE__*/(function (NodeViewDesc) {
   CustomNodeViewDesc.prototype.update = function update (node, outerDeco, innerDeco, view) {
     if (this.dirty == NODE_DIRTY) { return false }
     if (this.spec.update) {
-      var result = this.spec.update(node, outerDeco);
+      var result = this.spec.update(node, outerDeco, innerDeco);
       if (result) { this.updateInner(node, outerDeco, innerDeco, view); }
       return result
     } else if (!this.contentDOM && !node.isLeaf) {
@@ -15716,8 +15853,8 @@ function patchAttributes(dom, prev, cur) {
     { if (name$1 != "class" && name$1 != "style" && name$1 != "nodeName" && cur[name$1] != prev[name$1])
       { dom.setAttribute(name$1, cur[name$1]); } }
   if (prev.class != cur.class) {
-    var prevList = prev.class ? prev.class.split(" ") : nothing;
-    var curList = cur.class ? cur.class.split(" ") : nothing;
+    var prevList = prev.class ? prev.class.split(" ").filter(Boolean) : nothing;
+    var curList = cur.class ? cur.class.split(" ").filter(Boolean) : nothing;
     for (var i = 0; i < prevList.length; i++) { if (curList.indexOf(prevList[i]) == -1)
       { dom.classList.remove(prevList[i]); } }
     for (var i$1 = 0; i$1 < curList.length; i$1++) { if (prevList.indexOf(curList[i$1]) == -1)
@@ -15766,13 +15903,7 @@ var ViewTreeUpdater = function ViewTreeUpdater(top, lockedNode) {
   // Tracks whether anything was changed
   this.changed = false;
 
-  var pre = preMatch(top.node.content, top.children);
-  this.preMatched = pre.nodes;
-  this.preMatchOffset = pre.offset;
-};
-
-ViewTreeUpdater.prototype.getPreMatch = function getPreMatch (index) {
-  return index >= this.preMatchOffset ? this.preMatched[index - this.preMatchOffset] : null
+  this.preMatch = preMatch(top.node.content, top.children);
 };
 
 // Destroy and remove the children between the given indices in
@@ -15829,18 +15960,21 @@ ViewTreeUpdater.prototype.syncToMarks = function syncToMarks (marks, inline, vie
   }
 };
 
-// : (Node, [Decoration], DecorationSet) → bool
+// : (Node, [Decoration], DecorationSource) → bool
 // Try to find a node desc matching the given data. Skip over it and
 // return true when successful.
 ViewTreeUpdater.prototype.findNodeMatch = function findNodeMatch (node, outerDeco, innerDeco, index) {
-  var found = -1, preMatch = index < 0 ? undefined : this.getPreMatch(index), children = this.top.children;
-  if (preMatch && preMatch.matchesNode(node, outerDeco, innerDeco)) {
-    found = children.indexOf(preMatch);
+  var children = this.top.children, found = -1;
+  if (index >= this.preMatch.index) {
+    for (var i = this.index; i < children.length; i++) { if (children[i].matchesNode(node, outerDeco, innerDeco)) {
+      found = i;
+      break
+    } }
   } else {
-    for (var i = this.index, e = Math.min(children.length, i + 5); i < e; i++) {
-      var child = children[i];
-      if (child.matchesNode(node, outerDeco, innerDeco) && this.preMatched.indexOf(child) < 0) {
-        found = i;
+    for (var i$1 = this.index, e = Math.min(children.length, i$1 + 1); i$1 < e; i$1++) {
+      var child = children[i$1];
+      if (child.matchesNode(node, outerDeco, innerDeco) && !this.preMatch.matched.has(child)) {
+        found = i$1;
         break
       }
     }
@@ -15851,15 +15985,15 @@ ViewTreeUpdater.prototype.findNodeMatch = function findNodeMatch (node, outerDec
   return true
 };
 
-// : (Node, [Decoration], DecorationSet, EditorView, Fragment, number) → bool
+// : (Node, [Decoration], DecorationSource, EditorView, Fragment, number) → bool
 // Try to update the next node, if any, to the given data. Checks
 // pre-matches to avoid overwriting nodes that could still be used.
 ViewTreeUpdater.prototype.updateNextNode = function updateNextNode (node, outerDeco, innerDeco, view, index) {
   for (var i = this.index; i < this.top.children.length; i++) {
     var next = this.top.children[i];
     if (next instanceof index_es_NodeViewDesc) {
-      var preMatch = this.preMatched.indexOf(next);
-      if (preMatch > -1 && preMatch + this.preMatchOffset != index) { return false }
+      var preMatch = this.preMatch.matched.get(next);
+      if (preMatch != null && preMatch != index) { return false }
       var nextDOM = next.dom;
 
       // Can't update if nextDOM is or contains this.lock, except if
@@ -15880,7 +16014,7 @@ ViewTreeUpdater.prototype.updateNextNode = function updateNextNode (node, outerD
   return false
 };
 
-// : (Node, [Decoration], DecorationSet, EditorView)
+// : (Node, [Decoration], DecorationSource, EditorView)
 // Insert the node as a newly created node desc.
 ViewTreeUpdater.prototype.addNode = function addNode (node, outerDeco, innerDeco, view, pos) {
   this.top.children.splice(this.index++, 0, index_es_NodeViewDesc.create(this.top, node, outerDeco, innerDeco, view, pos));
@@ -15917,27 +16051,27 @@ ViewTreeUpdater.prototype.addTextblockHacks = function addTextblockHacks () {
   }
 };
 
-// : (Fragment, [ViewDesc]) → [ViewDesc]
+// : (Fragment, [ViewDesc]) → {index: number, matched: Map<ViewDesc, number>}
 // Iterate from the end of the fragment and array of descs to find
-// directly matching ones, in order to avoid overeagerly reusing
-// those for other nodes. Returns an array whose positions correspond
-// to node positions in the fragment, and whose elements are either
-// descs matched to the child at that index, or empty.
+// directly matching ones, in order to avoid overeagerly reusing those
+// for other nodes. Returns the fragment index of the first node that
+// is part of the sequence of matched nodes at the end of the
+// fragment.
 function preMatch(frag, descs) {
-  var result = [], end = frag.childCount;
-  for (var i = descs.length - 1; end > 0 && i >= 0; i--) {
-    var desc = descs[i], node = desc.node;
+  var fI = frag.childCount, dI = descs.length, matched = new Map;
+  for (; fI > 0 && dI > 0; dI--) {
+    var desc = descs[dI - 1], node = desc.node;
     if (!node) { continue }
-    if (node != frag.child(end - 1)) { break }
-    result.push(desc);
-    --end;
+    if (node != frag.child(fI - 1)) { break }
+    --fI;
+    matched.set(desc, fI);
   }
-  return {nodes: result.reverse(), offset: end}
+  return {index: fI, matched: matched}
 }
 
 function compareSide(a, b) { return a.type.side - b.type.side }
 
-// : (ViewDesc, DecorationSet, (Decoration, number), (Node, [Decoration], DecorationSet, number))
+// : (ViewDesc, DecorationSource, (Decoration, number), (Node, [Decoration], DecorationSource, number))
 // This function abstracts iterating over the nodes and decorations in
 // a fragment. Calls `onNode` for each node, with its local and child
 // decorations. Splits text nodes when there is a decoration starting
@@ -16921,7 +17055,7 @@ function parseFromClipboard(view, text, html, plainText, $context) {
   var asText = text && (plainText || inCode || !html);
   if (asText) {
     view.someProp("transformPastedText", function (f) { text = f(text, inCode || plainText); });
-    if (inCode) { return new Slice(Fragment.from(view.state.schema.text(text)), 0, 0) }
+    if (inCode) { return new Slice(Fragment.from(view.state.schema.text(text.replace(/\r\n?/g, "\n"))), 0, 0) }
     var parsed = view.someProp("clipboardTextParser", function (f) { return f(text, $context, plainText); });
     if (parsed) {
       slice = parsed;
@@ -17281,6 +17415,8 @@ DOMObserver.prototype.registerMutation = function registerMutation (mut, added) 
   if (!desc || desc.ignoreMutation(mut)) { return null }
 
   if (mut.type == "childList") {
+    if (desc.contentDOM && desc.contentDOM != desc.dom && !desc.contentDOM.contains(mut.target))
+      { return {from: desc.posBefore, to: desc.posAfter} }
     var prev = mut.previousSibling, next = mut.nextSibling;
     if (index_es_result.ie && index_es_result.ie_version <= 11 && mut.addedNodes.length) {
       // IE11 gives us incorrect next/prev siblings for some
@@ -18231,7 +18367,8 @@ Object.defineProperties( Decoration.prototype, prosemirror_view_dist_index_es_pr
 
 var none = [], noSpec = {};
 
-// ::- A collection of [decorations](#view.Decoration), organized in
+// :: class extends DecorationSource
+// A collection of [decorations](#view.Decoration), organized in
 // such a way that the drawing algorithm can efficiently use and
 // compare them. This is a persistent data structure—it is not
 // modified, updates create a new value.
@@ -18427,6 +18564,11 @@ DecorationSet.prototype.localsInner = function localsInner (node) {
   }
   return result
 };
+
+// DecorationSource:: interface
+// An object that can [provide](#view.EditorProps.decorations)
+// decorations. Implemented by [`DecorationSet`](#view.DecorationSet),
+// and passed to [node views](#view.EditorProps.nodeViews).
 
 var index_es_empty = new DecorationSet();
 
@@ -19222,7 +19364,7 @@ function changedNodeViews(a, b) {
 //   Can be used to transform pasted content before it is applied to
 //   the document.
 //
-//   nodeViews:: ?Object<(node: Node, view: EditorView, getPos: () → number, decorations: [Decoration]) → NodeView>
+//   nodeViews:: ?Object<(node: Node, view: EditorView, getPos: () → number, decorations: [Decoration], innerDecorations: DecorationSource) → NodeView>
 //   Allows you to pass custom rendering and behavior logic for nodes
 //   and marks. Should map node and mark names to constructor
 //   functions that produce a [`NodeView`](#view.NodeView) object
@@ -19238,6 +19380,13 @@ function changedNodeViews(a, b) {
 //   they can also be used as a way to provide context information to
 //   the node view without adding it to the document itself.
 //
+//   `innerDecorations` holds the decorations for the node's content.
+//   You can safely ignore this if your view has no content or a
+//   `contentDOM` property, since the editor will draw the decorations
+//   on the content. But if you, for example, want to create a nested
+//   editor with the content, it may make sense to provide it with the
+//   inner decorations.
+//
 //   clipboardSerializer:: ?DOMSerializer
 //   The DOM serializer to use when putting content onto the
 //   clipboard. If not given, the result of
@@ -19250,7 +19399,7 @@ function changedNodeViews(a, b) {
 //   editor will use [`textBetween`](#model.Node.textBetween) on the
 //   selected range.
 //
-//   decorations:: ?(state: EditorState) → ?DecorationSet
+//   decorations:: ?(state: EditorState) → ?DecorationSource
 //   A set of [document decorations](#view.Decoration) to show in the
 //   view.
 //
@@ -19420,7 +19569,7 @@ DropCursorView.prototype.dragover = function dragover (event) {
     var target = pos.pos;
     if (this.editorView.dragging && this.editorView.dragging.slice) {
       target = dropPoint(this.editorView.state.doc, target, this.editorView.dragging.slice);
-      if (target == null) { target = pos.pos; }
+      if (target == null) { return this.setCursor(null) }
     }
     this.setCursor(target);
     this.scheduleRemoval(5000);
@@ -21721,7 +21870,7 @@ function updateMark (type, attrs) {
 // CONCATENATED MODULE: ./node_modules/tiptap/dist/tiptap.esm.js
 
     /*!
-    * tiptap v1.32.0
+    * tiptap v1.32.1
     * (c) 2021 überdosis GbR (limited liability)
     * @license MIT
     */
@@ -22082,7 +22231,7 @@ class tiptap_esm_ExtensionManager {
       schema
     }));
     const nodeMarkKeymaps = this.extensions.filter(extension => ['node', 'mark'].includes(extension.type)).filter(extension => extension.keys).map(extension => extension.keys({
-      type: schema["".concat(extension.type, "s")][extension.name],
+      type: schema[`${extension.type}s`][extension.name],
       schema
     }));
     return [...extensionKeymaps, ...nodeMarkKeymaps].map(keys => index_es_keymap(keys));
@@ -22098,7 +22247,7 @@ class tiptap_esm_ExtensionManager {
       schema
     }));
     const nodeMarkInputRules = allowedExtensions.filter(extension => ['node', 'mark'].includes(extension.type)).filter(extension => extension.inputRules).map(extension => extension.inputRules({
-      type: schema["".concat(extension.type, "s")][extension.name],
+      type: schema[`${extension.type}s`][extension.name],
       schema
     }));
     return [...extensionInputRules, ...nodeMarkInputRules].reduce((allInputRules, inputRules) => [...allInputRules, ...inputRules], []);
@@ -22114,7 +22263,7 @@ class tiptap_esm_ExtensionManager {
       schema
     }));
     const nodeMarkPasteRules = allowedExtensions.filter(extension => ['node', 'mark'].includes(extension.type)).filter(extension => extension.pasteRules).map(extension => extension.pasteRules({
-      type: schema["".concat(extension.type, "s")][extension.name],
+      type: schema[`${extension.type}s`][extension.name],
       schema
     }));
     return [...extensionPasteRules, ...nodeMarkPasteRules].reduce((allPasteRules, pasteRules) => [...allPasteRules, ...pasteRules], []);
@@ -22133,7 +22282,7 @@ class tiptap_esm_ExtensionManager {
       const value = extension.commands({
         schema,
         ...(['node', 'mark'].includes(type) ? {
-          type: schema["".concat(type, "s")][name]
+          type: schema[`${type}s`][name]
         } : {})
       });
 
@@ -22360,7 +22509,7 @@ class tiptap_esm_Editor extends Emitter {
     }
 
     this.events.forEach(name => {
-      this.on(name, this.options[camelCase("on ".concat(name))] || (() => {}));
+      this.on(name, this.options[camelCase(`on ${name}`)] || (() => {}));
     });
     this.emit('init', {
       view: this.view,
@@ -22505,7 +22654,7 @@ class tiptap_esm_Editor extends Emitter {
     }
 
     if (typeof content === 'string') {
-      const htmlString = "<div>".concat(content, "</div>");
+      const htmlString = `<div>${content}</div>`;
       const parser = new window.DOMParser();
       const element = parser.parseFromString(htmlString, 'text/html').body.firstElementChild;
       return DOMParser.fromSchema(this.schema).parse(element, parseOptions);
@@ -22728,7 +22877,7 @@ class tiptap_esm_Editor extends Emitter {
     }
 
     const newState = this.state.reconfigure({
-      plugins: this.state.plugins.filter(plugin => !plugin.key.startsWith("".concat(name, "$")))
+      plugins: this.state.plugins.filter(plugin => !plugin.key.startsWith(`${name}$`))
     });
     this.view.updateState(newState);
   }
@@ -22884,7 +23033,7 @@ var EditorMenuBar = {
 function tiptap_esm_textRange(node, from, to) {
   const range = document.createRange();
   range.setEnd(node, to == null ? node.nodeValue.length : to);
-  range.setStart(node, from || 0);
+  range.setStart(node, Math.max(from, 0));
   return range;
 }
 
@@ -26374,7 +26523,7 @@ function redoDepth(state) {
 // CONCATENATED MODULE: ./node_modules/tiptap-extensions/dist/extensions.esm.js
 
     /*!
-    * tiptap-extensions v1.35.0
+    * tiptap-extensions v1.35.1
     * (c) 2021 überdosis GbR (limited liability)
     * @license MIT
     */
@@ -26731,12 +26880,12 @@ class extensions_esm_Heading extends tiptap_esm_Node {
       defining: true,
       draggable: false,
       parseDOM: this.options.levels.map(level => ({
-        tag: "h".concat(level),
+        tag: `h${level}`,
         attrs: {
           level
         }
       })),
-      toDOM: node => ["h".concat(node.attrs.level), 0]
+      toDOM: node => [`h${node.attrs.level}`, 0]
     };
   }
 
@@ -26752,7 +26901,7 @@ class extensions_esm_Heading extends tiptap_esm_Node {
   }) {
     return this.options.levels.reduce((items, level) => ({ ...items,
       ...{
-        ["Shift-Ctrl-".concat(level)]: setBlockType(type, {
+        [`Shift-Ctrl-${level}`]: setBlockType(type, {
           level
         })
       }
@@ -26762,7 +26911,7 @@ class extensions_esm_Heading extends tiptap_esm_Node {
   inputRules({
     type
   }) {
-    return this.options.levels.map(level => textblockTypeInputRule(new RegExp("^(#{1,".concat(level, "})\\s$")), type, () => ({
+    return this.options.levels.map(level => textblockTypeInputRule(new RegExp(`^(#{1,${level}})\\s$`), type, () => ({
       level
     })));
   }
@@ -26989,10 +27138,10 @@ function triggerCharacter({
     } // Matching expressions used for later
 
 
-    const escapedChar = "\\".concat(char);
-    const suffix = new RegExp("\\s".concat(escapedChar, "$"));
+    const escapedChar = `\\${char}`;
+    const suffix = new RegExp(`\\s${escapedChar}$`);
     const prefix = startOfLine ? '^' : '';
-    const regexp = allowSpaces ? new RegExp("".concat(prefix).concat(escapedChar, ".*?(?=\\s").concat(escapedChar, "|$)"), 'gm') : new RegExp("".concat(prefix, "(?:^)?").concat(escapedChar, "[^\\s").concat(escapedChar, "]*"), 'gm'); // Lookup the boundaries of the current node
+    const regexp = allowSpaces ? new RegExp(`${prefix}${escapedChar}.*?(?=\\s${escapedChar}|$)`, 'gm') : new RegExp(`${prefix}(?:^)?${escapedChar}[^\\s${escapedChar}]*`, 'gm'); // Lookup the boundaries of the current node
 
     const textFrom = $position.before();
     const textTo = $position.end();
@@ -27080,7 +27229,7 @@ function SuggestionsPlugin({
           }
 
           const state = handleExit ? prev : next;
-          const decorationNode = document.querySelector("[data-decoration-id=\"".concat(state.decorationId, "\"]")); // build a virtual node for popper.js or tippy.js
+          const decorationNode = document.querySelector(`[data-decoration-id="${state.decorationId}"]`); // build a virtual node for popper.js or tippy.js
           // this can be used for building popups without a DOM node
 
           const virtualNode = decorationNode ? {
@@ -27243,7 +27392,7 @@ class extensions_esm_Mention extends tiptap_esm_Node {
   createFragment(schema, label) {
     return Fragment.fromJSON(schema, [{
       type: 'text',
-      text: "".concat(this.options.matcher.char).concat(label)
+      text: `${this.options.matcher.char}${label}`
     }]);
   }
 
@@ -27267,7 +27416,7 @@ class extensions_esm_Mention extends tiptap_esm_Node {
       toDOM: node => ['span', {
         class: this.options.mentionClass,
         'data-mention-id': node.attrs.id
-      }, "".concat(this.options.matcher.char).concat(node.attrs.label)],
+      }, `${this.options.matcher.char}${node.attrs.label}`],
       parseDOM: [{
         tag: 'span[data-mention-id]',
         getAttrs: dom => {
@@ -27379,7 +27528,7 @@ var TableNodes = tableNodes({
       setDOMAttr(value, attrs) {
         if (value) {
           const style = {
-            style: "".concat(attrs.style || '', "background-color: ").concat(value, ";")
+            style: `${attrs.style || ''}background-color: ${value};`
           };
           Object.assign(attrs, style);
         }
@@ -27515,7 +27664,12 @@ class extensions_esm_TodoItem extends tiptap_esm_Node {
         }
 
       },
-      template: "\n        <li :data-type=\"node.type.name\" :data-done=\"node.attrs.done.toString()\" data-drag-handle>\n          <span class=\"todo-checkbox\" contenteditable=\"false\" @click=\"onChange\"></span>\n          <div class=\"todo-content\" ref=\"content\" :contenteditable=\"view.editable.toString()\"></div>\n        </li>\n      "
+      template: `
+        <li :data-type="node.type.name" :data-done="node.attrs.done.toString()" data-drag-handle>
+          <span class="todo-checkbox" contenteditable="false" @click="onChange"></span>
+          <div class="todo-content" ref="content" :contenteditable="view.editable.toString()"></div>
+        </li>
+      `
     };
   }
 
@@ -27544,7 +27698,7 @@ class extensions_esm_TodoItem extends tiptap_esm_Node {
       },
       parseDOM: [{
         priority: 51,
-        tag: "[data-type=\"".concat(this.name, "\"]"),
+        tag: `[data-type="${this.name}"]`,
         getAttrs: dom => ({
           done: dom.getAttribute('data-done') === 'true'
         })
@@ -27578,7 +27732,7 @@ class extensions_esm_TodoList extends tiptap_esm_Node {
       }, 0],
       parseDOM: [{
         priority: 51,
-        tag: "[data-type=\"".concat(this.name, "\"]")
+        tag: `[data-type="${this.name}"]`
       }]
     };
   }
@@ -28643,8 +28797,8 @@ var editorvue_type_style_index_0_lang_scss_ = __webpack_require__("8eb9");
 
 var editor_component = normalizeComponent(
   components_editorvue_type_script_lang_js_,
-  editorvue_type_template_id_7f682e2f_render,
-  editorvue_type_template_id_7f682e2f_staticRenderFns,
+  editorvue_type_template_id_4befd822_render,
+  editorvue_type_template_id_4befd822_staticRenderFns,
   false,
   null,
   null,
@@ -28653,12 +28807,12 @@ var editor_component = normalizeComponent(
 )
 
 /* harmony default export */ var editor = (editor_component.exports);
-// CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js?{"cacheDirectory":"node_modules/.cache/vue-loader","cacheIdentifier":"00c85710-vue-loader-template"}!./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./src/components/download.vue?vue&type=template&id=15a1c690&
-var downloadvue_type_template_id_15a1c690_render = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('v-dialog',{attrs:{"max-width":"900px","scrollable":""},model:{value:(_vm.opening),callback:function ($$v) {_vm.opening=$$v},expression:"opening"}},[_c('v-card',[_c('v-toolbar',{attrs:{"card":"","dark":"","color":"primary"}},[_c('v-btn',{attrs:{"icon":"","dark":""},on:{"click":function($event){return _vm.$emit('opening-switched', false)}}},[_c('v-icon',[_vm._v("close")])],1),_vm._v(" \n      Загрузка изображения\n    ")],1),_c('v-card-text',[_c('form',{attrs:{"id":"formFiles","action":""},on:{"submit":function($event){$event.preventDefault();}}},[_c('input',{attrs:{"type":"file","id":"uploadImg","accept":"image/*"},on:{"change":function($event){return _vm.processFile($event)}}}),_c('p',[_vm._v("Only .jpg and .png files, size < "+_vm._s(_vm.size)+"кб")])]),_c('img',{staticStyle:{"max-width":"500px"},attrs:{"src":_vm.urlFirebase,"alt":""}}),_c('v-text-field',{attrs:{"value":'/_vue_builder/' + _vm.url,"readonly":"","disabled":""}})],1),(_vm.url)?_c('v-btn',{on:{"click":function($event){return _vm.saveUrl()}}},[_vm._v("OK")]):_vm._e()],1)],1)}
-var downloadvue_type_template_id_15a1c690_staticRenderFns = []
+// CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js?{"cacheDirectory":"node_modules/.cache/vue-loader","cacheIdentifier":"572ea87a-vue-loader-template"}!./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./src/components/download.vue?vue&type=template&id=58696f0a&
+var downloadvue_type_template_id_58696f0a_render = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('v-dialog',{attrs:{"max-width":"900px","scrollable":""},model:{value:(_vm.opening),callback:function ($$v) {_vm.opening=$$v},expression:"opening"}},[_c('v-card',[_c('v-toolbar',{attrs:{"card":"","dark":"","color":"primary"}},[_c('v-btn',{attrs:{"icon":"","dark":""},on:{"click":function($event){return _vm.$emit('opening-switched', false)}}},[_c('v-icon',[_vm._v("close")])],1),_vm._v(" \n      Загрузка изображения\n    ")],1),_c('v-card-text',[_c('form',{attrs:{"id":"formFiles","action":""},on:{"submit":function($event){$event.preventDefault();}}},[_c('input',{attrs:{"type":"file","id":"uploadImg","accept":"image/*"},on:{"change":function($event){return _vm.processFile($event)}}}),_c('p',[_vm._v("Only .jpg and .png files, size < "+_vm._s(_vm.size)+"кб")])]),_c('img',{staticStyle:{"max-width":"500px"},attrs:{"src":_vm.urlFirebase,"alt":""}}),_c('v-text-field',{attrs:{"value":'/_vue_builder/' + _vm.url,"readonly":"","disabled":""}})],1),(_vm.url)?_c('v-btn',{on:{"click":function($event){return _vm.saveUrl()}}},[_vm._v("OK")]):_vm._e()],1)],1)}
+var downloadvue_type_template_id_58696f0a_staticRenderFns = []
 
 
-// CONCATENATED MODULE: ./src/components/download.vue?vue&type=template&id=15a1c690&
+// CONCATENATED MODULE: ./src/components/download.vue?vue&type=template&id=58696f0a&
 
 // EXTERNAL MODULE: ./node_modules/core-js/modules/es6.regexp.replace.js
 var es6_regexp_replace = __webpack_require__("a481");
@@ -28722,6 +28876,9 @@ var es6_number_constructor = __webpack_require__("c5f6");
     },
     id: {
       default: ''
+    },
+    filestore: {
+      default: 'https://firebasestorage.googleapis.com/v0/b/smartcatpromoadmin.appspot.com/o/smartcat%2F'
     }
   },
   data: function data() {
@@ -28789,7 +28946,7 @@ var es6_number_constructor = __webpack_require__("c5f6");
           console.log('File available at', downloadURL);
           document.getElementById('formFiles').reset();
           _this.progress = 0;
-          _this.urlFirebase = 'https://firebasestorage.googleapis.com/v0/b/smartcatpromoadmin.appspot.com/o/smartcat%2F' + url + '?alt=media';
+          _this.urlFirebase = _this.filestore + url + '?alt=media';
         });
       });
     }
@@ -28807,8 +28964,8 @@ var es6_number_constructor = __webpack_require__("c5f6");
 
 var download_component = normalizeComponent(
   components_downloadvue_type_script_lang_js_,
-  downloadvue_type_template_id_15a1c690_render,
-  downloadvue_type_template_id_15a1c690_staticRenderFns,
+  downloadvue_type_template_id_58696f0a_render,
+  downloadvue_type_template_id_58696f0a_staticRenderFns,
   false,
   null,
   null,
@@ -28817,12 +28974,12 @@ var download_component = normalizeComponent(
 )
 
 /* harmony default export */ var download = (download_component.exports);
-// CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js?{"cacheDirectory":"node_modules/.cache/vue-loader","cacheIdentifier":"00c85710-vue-loader-template"}!./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./src/components/wrapperComponent.vue?vue&type=template&id=bdaa4f06&
-var wrapperComponentvue_type_template_id_bdaa4f06_render = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c(_vm.site + "-" + _vm.obj.name,_vm._b({tag:"component"},'component',Object.assign({}, _vm.mapBool, _vm.mapEditor, _vm.mapStrings, _vm.mapLinks, _vm.mapImgs),false))}
-var wrapperComponentvue_type_template_id_bdaa4f06_staticRenderFns = []
+// CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js?{"cacheDirectory":"node_modules/.cache/vue-loader","cacheIdentifier":"572ea87a-vue-loader-template"}!./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./src/components/wrapperComponent.vue?vue&type=template&id=06c14f00&
+var wrapperComponentvue_type_template_id_06c14f00_render = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c(_vm.site + "-" + _vm.obj.name,_vm._b({tag:"component"},'component',Object.assign({}, _vm.mapBool, _vm.mapEditor, _vm.mapStrings, _vm.mapLinks, _vm.mapImgs),false))}
+var wrapperComponentvue_type_template_id_06c14f00_staticRenderFns = []
 
 
-// CONCATENATED MODULE: ./src/components/wrapperComponent.vue?vue&type=template&id=bdaa4f06&
+// CONCATENATED MODULE: ./src/components/wrapperComponent.vue?vue&type=template&id=06c14f00&
 
 // CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js??ref--12-0!./node_modules/thread-loader/dist/cjs.js!./node_modules/babel-loader/lib!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./src/components/wrapperComponent.vue?vue&type=script&lang=js&
 //
@@ -28881,7 +29038,7 @@ var wrapperComponentvue_type_template_id_bdaa4f06_staticRenderFns = []
       this.mapImgs = {};
 
       for (var _key4 in this.obj.props.imgs) {
-        this.mapLinks[_key4] = 'https://firebasestorage.googleapis.com/v0/b/smartcatpromoadmin.appspot.com/o/smartcat%2F' + this.obj.props.imgs[_key4] + '?alt=media';
+        this.mapLinks[_key4] = this.filestore + this.obj.props.imgs[_key4] + '?alt=media';
       }
     }
   },
@@ -28897,6 +29054,9 @@ var wrapperComponentvue_type_template_id_bdaa4f06_staticRenderFns = []
     site: {
       type: String,
       default: 'bmv'
+    },
+    filestore: {
+      default: 'https://firebasestorage.googleapis.com/v0/b/smartcatpromoadmin.appspot.com/o/smartcat%2F'
     }
   }
 });
@@ -28912,8 +29072,8 @@ var wrapperComponentvue_type_template_id_bdaa4f06_staticRenderFns = []
 
 var wrapperComponent_component = normalizeComponent(
   components_wrapperComponentvue_type_script_lang_js_,
-  wrapperComponentvue_type_template_id_bdaa4f06_render,
-  wrapperComponentvue_type_template_id_bdaa4f06_staticRenderFns,
+  wrapperComponentvue_type_template_id_06c14f00_render,
+  wrapperComponentvue_type_template_id_06c14f00_staticRenderFns,
   false,
   null,
   null,
@@ -28927,6 +29087,16 @@ var wrapperComponent_component = normalizeComponent(
 
 
 
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 //
 //
 //
@@ -29058,6 +29228,9 @@ var wrapperComponent_component = normalizeComponent(
     id: {
       default: ''
     },
+    filestore: {
+      default: ''
+    },
     propListComponents: {
       default: function _default() {}
     }
@@ -29074,6 +29247,7 @@ var wrapperComponent_component = normalizeComponent(
       title: '',
       description: '',
       img: '',
+      uploadMetaImg: false,
       modalComponents: false,
       positionCreatingComponent: 0,
       obj_i: '',
@@ -29114,14 +29288,18 @@ var wrapperComponent_component = normalizeComponent(
     getComponents: function getComponents() {
       this.listComponents = this.propListComponents;
     },
-    openDownload: function openDownload(obj_i, imgs_im, size) {
+    openDownload: function openDownload(obj_i, imgs_im, size, meta) {
       this.modalDownload = true;
+      this.uploadMetaImg = !!meta;
       this.obj_i = obj_i;
       this.imgs_im = imgs_im;
       this.size = size;
     },
     uploadImg: function uploadImg(url) {
       this.obj[this.obj_i].props.imgs[this.imgs_im] = url;
+    },
+    uploadPreviewImg: function uploadPreviewImg(url) {
+      this.img = url;
     },
     savePage: function () {
       var _savePage = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
@@ -29249,8 +29427,8 @@ var wrapperComponent_component = normalizeComponent(
 });
 // CONCATENATED MODULE: ./src/components/builder.vue?vue&type=script&lang=js&
  /* harmony default export */ var components_buildervue_type_script_lang_js_ = (buildervue_type_script_lang_js_); 
-// EXTERNAL MODULE: ./src/components/builder.vue?vue&type=style&index=0&id=6709c320&scoped=true&lang=scss&
-var buildervue_type_style_index_0_id_6709c320_scoped_true_lang_scss_ = __webpack_require__("4eee");
+// EXTERNAL MODULE: ./src/components/builder.vue?vue&type=style&index=0&id=5e1266bd&scoped=true&lang=scss&
+var buildervue_type_style_index_0_id_5e1266bd_scoped_true_lang_scss_ = __webpack_require__("fc60");
 
 // CONCATENATED MODULE: ./src/components/builder.vue
 
@@ -29263,31 +29441,28 @@ var buildervue_type_style_index_0_id_6709c320_scoped_true_lang_scss_ = __webpack
 
 var builder_component = normalizeComponent(
   components_buildervue_type_script_lang_js_,
-  buildervue_type_template_id_6709c320_scoped_true_render,
-  buildervue_type_template_id_6709c320_scoped_true_staticRenderFns,
+  buildervue_type_template_id_5e1266bd_scoped_true_render,
+  buildervue_type_template_id_5e1266bd_scoped_true_staticRenderFns,
   false,
   null,
-  "6709c320",
+  "5e1266bd",
   null
   
 )
 
 /* harmony default export */ var builder = (builder_component.exports);
-// CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js?{"cacheDirectory":"node_modules/.cache/vue-loader","cacheIdentifier":"00c85710-vue-loader-template"}!./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./src/components/choose.vue?vue&type=template&id=413675b8&
-var choosevue_type_template_id_413675b8_render = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',[_c('v-btn',{staticClass:"blue",staticStyle:{"float":"right"},attrs:{"dark":""},on:{"click":function($event){_vm.modal = true}}},[_vm._v(_vm._s(_vm.btn))]),_c('v-dialog',{attrs:{"max-width":"500px","scrollable":""},model:{value:(_vm.modal),callback:function ($$v) {_vm.modal=$$v},expression:"modal"}},[_c('v-card',[_c('v-toolbar',{attrs:{"card":"","dark":"","color":"primary"}},[_c('v-btn',{attrs:{"icon":"","dark":""},on:{"click":function($event){_vm.modal = false}}},[_c('v-icon',[_vm._v("close")])],1),_vm._v("\n            "+_vm._s(_vm.text)+"\n        ")],1),_c('v-card-text',[_c('v-select',{attrs:{"items":_vm.languageArray,"loading":_vm.languageLoading,"disabled":_vm.languageBlock,"label":"language (язык)"},model:{value:(_vm.language),callback:function ($$v) {_vm.language=$$v},expression:"language"}}),(_vm.language)?_c('v-select',{attrs:{"items":_vm.categoryArray,"loading":_vm.categoryLoading,"disabled":_vm.categoryBlock,"label":"Category (категории)"},model:{value:(_vm.category),callback:function ($$v) {_vm.category=$$v},expression:"category"}}):_vm._e(),(_vm.category)?_c('v-select',{attrs:{"item-text":"1","item-value":"0","items":_vm.pageArray,"loading":_vm.pageLoading,"disabled":_vm.pageBlock,"label":"Page (страница)"},model:{value:(_vm.page),callback:function ($$v) {_vm.page=$$v},expression:"page"}}):_vm._e(),_c('div',{staticStyle:{"display":"flex","flex-direction":"row"}},[(_vm.site && _vm.language && _vm.category)?_c('v-btn',{attrs:{"color":"orange","dark":""},on:{"click":function($event){$event.preventDefault();return _vm.createFunc(_vm.site, _vm.language, _vm.category)}}},[_vm._v("Create new page in this catalog")]):_vm._e(),(_vm.site && _vm.language && _vm.category && _vm.page)?_c('v-btn',{staticStyle:{"margin-left":"auto"},attrs:{"color":"green","dark":""},on:{"click":function($event){$event.preventDefault();return _vm.actionFunc(_vm.site, _vm.language, _vm.category, _vm.page)}}},[_vm._v("Edit this page")]):_vm._e()],1)],1)],1)],1)],1)}
-var choosevue_type_template_id_413675b8_staticRenderFns = []
+// CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js?{"cacheDirectory":"node_modules/.cache/vue-loader","cacheIdentifier":"572ea87a-vue-loader-template"}!./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./src/components/choose.vue?vue&type=template&id=60368136&
+var choosevue_type_template_id_60368136_render = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',[_c('v-btn',{staticClass:"blue",staticStyle:{"float":"right"},attrs:{"dark":""},on:{"click":function($event){_vm.modal = true}}},[_vm._v(_vm._s(_vm.btn))]),_c('v-dialog',{attrs:{"max-width":"500px","scrollable":""},model:{value:(_vm.modal),callback:function ($$v) {_vm.modal=$$v},expression:"modal"}},[_c('v-card',[_c('v-toolbar',{attrs:{"card":"","dark":"","color":"primary"}},[_c('v-btn',{attrs:{"icon":"","dark":""},on:{"click":function($event){_vm.modal = false}}},[_c('v-icon',[_vm._v("close")])],1),_vm._v("\n            "+_vm._s(_vm.text)+"\n        ")],1),_c('v-card-text',[_c('v-select',{attrs:{"items":_vm.languageArray,"loading":_vm.languageLoading,"disabled":_vm.languageBlock,"label":"language (язык)"},model:{value:(_vm.language),callback:function ($$v) {_vm.language=$$v},expression:"language"}}),_c('v-layout',{attrs:{"align-center":"","justify-center":""}},[_c('v-flex',{attrs:{"xs6":"","sm8":"","md8":""}},[(_vm.language)?_c('v-select',{attrs:{"items":_vm.categoryArray,"loading":_vm.categoryLoading,"disabled":_vm.categoryBlock,"label":"Category (категории)"},model:{value:(_vm.category),callback:function ($$v) {_vm.category=$$v},expression:"category"}}):_vm._e()],1),_c('v-flex',{attrs:{"xs6":"","sm4":"","md4":""}},[(_vm.site && _vm.language && _vm.category)?_c('v-btn',{attrs:{"color":"orange","dark":""},on:{"click":function($event){$event.preventDefault();return _vm.createFunc(_vm.site, _vm.language, _vm.category)}}},[_vm._v("Create new page")]):_vm._e()],1)],1),(_vm.category)?_c('v-select',{attrs:{"item-text":"1","item-value":"0","items":_vm.pageArray,"loading":_vm.pageLoading,"disabled":_vm.pageBlock,"label":"Page (страница)"},model:{value:(_vm.page),callback:function ($$v) {_vm.page=$$v},expression:"page"}}):_vm._e(),_c('div',{staticStyle:{"display":"flex","flex-direction":"row"}},[(_vm.site && _vm.language && _vm.category && _vm.page)?_c('v-btn',{staticStyle:{"margin-left":"auto"},attrs:{"color":"green","dark":""},on:{"click":function($event){$event.preventDefault();return _vm.actionFunc(_vm.site, _vm.language, _vm.category, _vm.page)}}},[_vm._v("Edit this page")]):_vm._e()],1)],1)],1)],1)],1)}
+var choosevue_type_template_id_60368136_staticRenderFns = []
 
 
-// CONCATENATED MODULE: ./src/components/choose.vue?vue&type=template&id=413675b8&
+// CONCATENATED MODULE: ./src/components/choose.vue?vue&type=template&id=60368136&
 
 // EXTERNAL MODULE: ./node_modules/core-js/modules/es7.object.entries.js
 var es7_object_entries = __webpack_require__("ffc1");
 
 // EXTERNAL MODULE: ./node_modules/core-js/modules/web.dom.iterable.js
 var web_dom_iterable = __webpack_require__("ac6a");
-
-// EXTERNAL MODULE: ./node_modules/core-js/modules/es6.array.iterator.js
-var es6_array_iterator = __webpack_require__("cadf");
 
 // EXTERNAL MODULE: ./node_modules/core-js/modules/es6.object.keys.js
 var es6_object_keys = __webpack_require__("456d");
@@ -29298,7 +29473,12 @@ var es6_object_keys = __webpack_require__("456d");
 
 
 
-
+//
+//
+//
+//
+//
+//
 //
 //
 //
@@ -29532,8 +29712,8 @@ var es6_object_keys = __webpack_require__("456d");
 
 var choose_component = normalizeComponent(
   components_choosevue_type_script_lang_js_,
-  choosevue_type_template_id_413675b8_render,
-  choosevue_type_template_id_413675b8_staticRenderFns,
+  choosevue_type_template_id_60368136_render,
+  choosevue_type_template_id_60368136_staticRenderFns,
   false,
   null,
   null,
@@ -29542,7 +29722,7 @@ var choose_component = normalizeComponent(
 )
 
 /* harmony default export */ var choose = (choose_component.exports);
-// CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js?{"cacheDirectory":"node_modules/.cache/vue-loader","cacheIdentifier":"00c85710-vue-loader-template"}!./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./src/components/create.vue?vue&type=template&id=3dae0220&
+// CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js?{"cacheDirectory":"node_modules/.cache/vue-loader","cacheIdentifier":"572ea87a-vue-loader-template"}!./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./src/components/create.vue?vue&type=template&id=3dae0220&
 var createvue_type_template_id_3dae0220_render = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',[_c('v-text-field',{attrs:{"label":'Напишите url новой страницы - ' + (_vm.propLang=='en' ? 'www' : _vm.propLang ) + '.' + _vm.propSite + '.com/'+_vm.propCategory+'/'},on:{"change":function($event){return _vm.delSpaceUrl()}},model:{value:(_vm.path),callback:function ($$v) {_vm.path=$$v},expression:"path"}}),_c('p',[_vm._v("На основе какой страницы создать новую (если ничего не выбрать, то будет создана пустая страница)")]),_c('v-select',{attrs:{"items":Object.keys(_vm.settings),"label":"Language (язык)"},model:{value:(_vm.lang),callback:function ($$v) {_vm.lang=$$v},expression:"lang"}}),(_vm.lang)?_c('v-select',{attrs:{"items":Object.keys(_vm.settings[_vm.lang]),"label":"Category (категория)"},model:{value:(_vm.type),callback:function ($$v) {_vm.type=$$v},expression:"type"}}):_vm._e(),(_vm.type)?_c('v-select',{attrs:{"item-text":"1","item-value":"0","items":Object.entries(_vm.settings[_vm.lang][_vm.type]),"label":"Page (страница)"},model:{value:(_vm.id),callback:function ($$v) {_vm.id=$$v},expression:"id"}}):_vm._e(),_c('v-btn',{attrs:{"disabled":!_vm.path,"fab":"","small":"","dark":"","color":"orange"},on:{"click":function($event){$event.preventDefault();return _vm.createFunc(_vm.propSite, _vm.propLang, _vm.propCategory, _vm.path)}}},[_c('v-icon',{attrs:{"dark":""}},[_vm._v("add")])],1)],1)}
 var createvue_type_template_id_3dae0220_staticRenderFns = []
 
@@ -29553,7 +29733,6 @@ var createvue_type_template_id_3dae0220_staticRenderFns = []
 var es7_object_values = __webpack_require__("8615");
 
 // CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js??ref--12-0!./node_modules/thread-loader/dist/cjs.js!./node_modules/babel-loader/lib!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./src/components/create.vue?vue&type=script&lang=js&
-
 
 
 
@@ -29788,6 +29967,15 @@ var create_component = normalizeComponent(
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 
@@ -29797,6 +29985,9 @@ var create_component = normalizeComponent(
       default: function _default() {}
     },
     siteProp: {
+      default: ''
+    },
+    filestore: {
       default: ''
     }
   },
@@ -29865,7 +30056,7 @@ var mainComponent_component = normalizeComponent(
   staticRenderFns,
   false,
   null,
-  "37741ac9",
+  "5127d3de",
   null
   
 )
@@ -29877,6 +30068,17 @@ var mainComponent_component = normalizeComponent(
 // CONCATENATED MODULE: ./node_modules/@vue/cli-service/lib/commands/build/entry-lib-no-default.js
 
 
+
+
+/***/ }),
+
+/***/ "fc60":
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony import */ var _node_modules_mini_css_extract_plugin_dist_loader_js_ref_8_oneOf_1_0_node_modules_css_loader_index_js_ref_8_oneOf_1_1_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_postcss_loader_src_index_js_ref_8_oneOf_1_2_node_modules_sass_loader_dist_cjs_js_ref_8_oneOf_1_3_node_modules_cache_loader_dist_cjs_js_ref_0_0_node_modules_vue_loader_lib_index_js_vue_loader_options_builder_vue_vue_type_style_index_0_id_5e1266bd_scoped_true_lang_scss___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__("840a");
+/* harmony import */ var _node_modules_mini_css_extract_plugin_dist_loader_js_ref_8_oneOf_1_0_node_modules_css_loader_index_js_ref_8_oneOf_1_1_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_postcss_loader_src_index_js_ref_8_oneOf_1_2_node_modules_sass_loader_dist_cjs_js_ref_8_oneOf_1_3_node_modules_cache_loader_dist_cjs_js_ref_0_0_node_modules_vue_loader_lib_index_js_vue_loader_options_builder_vue_vue_type_style_index_0_id_5e1266bd_scoped_true_lang_scss___WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_node_modules_mini_css_extract_plugin_dist_loader_js_ref_8_oneOf_1_0_node_modules_css_loader_index_js_ref_8_oneOf_1_1_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_postcss_loader_src_index_js_ref_8_oneOf_1_2_node_modules_sass_loader_dist_cjs_js_ref_8_oneOf_1_3_node_modules_cache_loader_dist_cjs_js_ref_0_0_node_modules_vue_loader_lib_index_js_vue_loader_options_builder_vue_vue_type_style_index_0_id_5e1266bd_scoped_true_lang_scss___WEBPACK_IMPORTED_MODULE_0__);
+/* unused harmony reexport * */
 
 
 /***/ }),

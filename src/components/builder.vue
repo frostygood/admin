@@ -72,7 +72,7 @@
             <h3 style='margin-top: 30px;'>Links</h3>
             <v-text-field
               v-for="(elem, l) in item.props.links" :key="l" 
-              v-model="obj[i].props.boolean[l]"
+              v-model="obj[i].props.links[l]"
               :label="l"/>
             <h3 style='margin-top: 30px;'>Imgs</h3>
             <v-layout row wrap v-for="(elem, im) in item.props.imgs" :key="im">
