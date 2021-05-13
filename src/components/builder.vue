@@ -1,8 +1,8 @@
 <template>
   <div v-if='id'>
-    <v-btn class="green" dark @click.prevent="savePage()">Save</v-btn>
-    <v-btn class="orange" dark @click="modal = true">Metatags & url page</v-btn>
-    <v-dialog v-model="modal" max-width="500px" scrollable>
+    <v-btn class="green" dark @click.prevent="savePage()">Сохранить</v-btn>
+    <v-btn class="orange" dark @click="modal = true">Настройки страницы</v-btn>
+    <v-dialog v-model="modal" max-width="500px" persistent lazy scrollable>
       <v-card>
         <v-toolbar card dark color="primary"><v-btn icon dark @click="modal = false"><v-icon>close</v-icon></v-btn></v-toolbar>
         <v-card-text>
@@ -19,7 +19,11 @@
             </v-flex>
           </div>
           <div>
-            <v-text-field v-model="path" :label="(lang=='en' ? 'www' : lang ) + '.' + site + '.com/'+type+'/'"></v-text-field>
+            <v-text-field 
+              v-model="path" 
+              :label="(lang=='en' ? 'www' : lang ) + '.' + site + '.com/'+type+'/'"
+              @change="delSpaceUrl()">
+            </v-text-field>
           </div>
         </v-card-text>
       </v-card>
@@ -142,8 +146,10 @@ export default {
         loading: false,
         listComponents: [],
         strings: {},
+        settings: {},
         obj: [],
         path: '',
+        startPath: '',
         title: '',
         description: '',
         img: '',
@@ -207,10 +213,19 @@ export default {
         img: this.img,
         id: this.id,
       }
-      this.$db.collection(''+this.site).doc(''+this.lang).collection(''+this.type).doc(""+this.id).set(item).then(() => {
-          alert("Сохранено")
+      await this.$db.collection(''+this.site).doc('collections').get().then((doc) => {
+        console.log("Document data:", doc.data());
+        this.settings = doc.data()
+
+        let setItem = JSON.parse(JSON.stringify(this.settings))
+        setItem[this.lang][this.type][this.id] = this.path
+
+        this.$db.collection(''+this.site).doc(''+this.lang).collection(''+this.type).doc(""+this.id).set(item).then(() => {
+          this.$db.collection(''+this.site).doc('collections').set(setItem).then(() => {
+              alert("Сохранено")
+            })
         });
-      
+      })
     },
     async getPage() {
       await this.$db.collection(''+this.site).doc(''+this.lang).collection(''+this.type).doc(""+this.id).get()
@@ -220,6 +235,7 @@ export default {
               this.strings = doc.data().strings
               this.obj = doc.data().page
               this.path = doc.data().path
+              this.startPath = doc.data().path
               this.title = doc.data().title
               this.description = doc.data().description
               this.img = doc.data().img
@@ -264,6 +280,23 @@ export default {
         addingComponent.props.editor[key] = idComponent + '_editor_' + key
       }
       return addingComponent
+    },
+    async delSpaceUrl() {
+      let thisApp = this;
+      this.path = this.path.replace(/[^\w\d]/g, '-').toLowerCase();
+
+      await this.$db.collection(''+this.site).doc('collections').get().then((doc) => {
+        console.log("Document data:", doc.data());
+        this.settings = doc.data()
+
+        console.log(Object.values(this.settings[this.lang][this.type]))
+        Object.values(this.settings[this.lang][this.type]).forEach(function(url) {
+            if (url == thisApp.path && url != thisApp.startPath) {
+              alert('This url is already in use! / Такой url уже используется!');
+              thisApp.path = thisApp.startPath
+            }
+        });
+      })      
     },
   },
   components: {

@@ -100,7 +100,7 @@ export default {
       },
       delSpaceUrl() {
         let thisApp = this;
-        this.path = this.path.replace(/[^\w\d]/g, '_').toLowerCase();
+        this.path = this.path.replace(/[^\w\d]/g, '-').toLowerCase();
         console.log(Object.values(this.settings[this.propLang][this.propCategory]))
         Object.values(this.settings[this.propLang][this.propCategory]).forEach(function(url) {
             if (url == thisApp.path) {
