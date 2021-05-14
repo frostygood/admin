@@ -59,27 +59,27 @@
         <v-card tile>
           <v-toolbar card dark color="primary"><v-btn icon dark @click="obj[i].edit = false"><v-icon>close</v-icon></v-btn></v-toolbar>
           <v-card-text>
-            <h3>Checkboxes</h3>
-            <v-switch v-for="(elem, b) in item.props.boolean" :key="b" 
+            <h3 v-if="Object.keys(item.props.boolean).length > 0">Переключатели</h3>
+            <v-switch v-for="(elem, b) in item.props.boolean" :key="b + '-' + i" 
             style="display: inline-block; margin-right: 30px;"
             v-model="obj[i].props.boolean[b]" :label="b"></v-switch>
-            <h3 style='margin-top: 30px;'>Strings</h3>
+            <h3 v-if="Object.keys(item.props.string).length > 0" style='margin-top: 30px;'>Однострочный текст без форматирования</h3>
             <v-text-field
-              v-for="(elem, s) in item.props.string" :key="s" 
+              v-for="(elem, s) in item.props.string" :key="s + '-' + i"
               v-model="strings[obj[i].props.string[s]]"
               :label="s">
             </v-text-field>
-            <h3 style='margin-top: 30px;'>Texts</h3>
-            <editor v-for="(elem, e) in item.props.editor" :key="e" 
+            <h3 v-if="Object.keys(item.props.editor).length > 0" style='margin-top: 30px;'>Текст с форматированием</h3>
+            <editor v-for="(elem, e) in item.props.editor" :key="e + '-' + i"
               v-model="strings[elem]">
             </editor>
-            <h3 style='margin-top: 30px;'>Links</h3>
+            <h3 v-if="Object.keys(item.props.links).length > 0" style='margin-top: 30px;'>Ссылки</h3>
             <v-text-field
-              v-for="(elem, l) in item.props.links" :key="l" 
+              v-for="(elem, l) in item.props.links" :key="l + '-' + i"
               v-model="obj[i].props.links[l]"
               :label="l"/>
-            <h3 style='margin-top: 30px;'>Imgs</h3>
-            <v-layout row wrap v-for="(elem, im) in item.props.imgs" :key="im">
+            <h3 v-if="Object.keys(item.props.imgs).length > 0" style='margin-top: 30px;'>Картинки</h3>
+            <v-layout row wrap v-for="(elem, im) in item.props.imgs" :key="im + '-' + i">
               <v-flex xs8 sm10 md10>
                 <v-text-field 
                   disabled

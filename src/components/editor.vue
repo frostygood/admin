@@ -33,14 +33,6 @@
           <icon name="code" />
         </button>
 
-        <!-- <button
-          class="menubar__button"
-          :class="{ 'is-active': isActive.paragraph() }"
-          @click="commands.paragraph"
-        >
-          <icon name="paragraph" />
-        </button> -->
-
         <button
           class="menubar__button"
           :class="{ 'is-active': isActive.heading({ level: 2 }) }"
@@ -223,7 +215,7 @@ export default {
       this.linkMenuIsActive = false
     },
     setLinkUrl(command, url) {
-      command({ href: url })
+      command({ href: url, target: '_blank' })
       this.hideLinkMenu()
       this.editor.focus()
     },
