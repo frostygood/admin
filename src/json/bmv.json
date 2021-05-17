@@ -45,18 +45,23 @@
         "name": "space",
         "edit": false,
         "id": "id",
+        "selects": {
+            "name_class": ["large", "big", "small", "last"]
+        },
         "props": {
             "boolean": {
                 "note": false
             },
             "string": { 
-                "name_class": "large"
             },
             "editor": {
             },
             "imgs": {
             },
             "links": {
+            },
+            "selects": {
+                "name_class": "large"
             }
         }
     },

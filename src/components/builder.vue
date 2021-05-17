@@ -63,7 +63,14 @@
             <v-switch v-for="(elem, b) in item.props.boolean" :key="b + '-' + i" 
             style="display: inline-block; margin-right: 30px;"
             v-model="obj[i].props.boolean[b]" :label="b"></v-switch>
-            <h3 v-if="Object.keys(item.props.string).length > 0" style='margin-top: 30px;'>Однострочный текст без форматирования</h3>
+            <h3>Выбор из вариантов</h3>
+            <v-select v-for="(elem, se) in item.props.selects" :key="se" 
+              v-model="obj[i].props.selects[se]" 
+              :label="se"
+              outline
+              :items="obj[i].selects[se]">
+            </v-select>
+           <h3 v-if="Object.keys(item.props.string).length > 0" style='margin-top: 30px;'>Однострочный текст без форматирования</h3>
             <v-text-field
               v-for="(elem, s) in item.props.string" :key="s + '-' + i"
               v-model="strings[obj[i].props.string[s]]"

@@ -1,2 +1,2 @@
 (window["webpackJsonp"]=window["webpackJsonp"]||[]).push([["chunk-12f4bef8"],{"05ec":function(t,e,a){"use strict";a("8451")},2392:function(t,e,a){"use strict";a.r(e);var i=function(){var t=this,e=t.$createElement,a=t._self._c||e;return t.img?a("img",{staticClass:"big_img",attrs:{decoding:"async",loading:"lazy",src:t.img,alt:t.alt}}):t._e()},n=[],c={props:{img:{type:String,default:"https://www.bmvcompany.ru/_vue_builder/bmv_ru_articles_1616684670521_1618069015780_article-kak_schitat_mochnost.jpeg"},alt:{type:String,default:""}}},s=c,r=(a("05ec"),a("2877")),l=Object(r["a"])(s,i,n,!1,null,"7a2a1e32",null);e["default"]=l.exports},8451:function(t,e,a){}}]);
-//# sourceMappingURL=chunk-12f4bef8.95544c4d.js.map
+//# sourceMappingURL=chunk-12f4bef8.5ef3b6ec.js.map
