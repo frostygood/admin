@@ -58,45 +58,53 @@
         v-model="obj[i].edit" max-width="900px" persistent lazy scrollable>
         <v-card tile>
           <v-toolbar card dark color="primary"><v-btn icon dark @click="obj[i].edit = false"><v-icon>close</v-icon></v-btn></v-toolbar>
-          <v-card-text>
-            <h3 v-if="Object.keys(item.props.boolean).length > 0">Переключатели</h3>
+          <v-card-text style="display: flex; flex-direction: column;">
             <v-switch v-for="(elem, b) in item.props.boolean" :key="b + '-' + i" 
-            style="display: inline-block; margin-right: 30px;"
-            v-model="obj[i].props.boolean[b]" :label="b"></v-switch>
-            <h3>Выбор из вариантов</h3>
+              style="display: inline-block; margin-right: 30px;"
+              :style="{'order': obj[i].hasOwnProperty('orders') && obj[i].orders.hasOwnProperty(b) ? obj[i].orders[b] : b}"
+              :label="obj[i].hasOwnProperty('placeholders') && obj[i].placeholders.hasOwnProperty(b) ? obj[i].placeholders[b] : b"
+              v-model="obj[i].props.boolean[b]">
+            </v-switch>
             <v-select v-for="(elem, se) in item.props.selects" :key="se" 
               v-model="obj[i].props.selects[se]" 
-              :label="se"
+              :label="obj[i].placeholders[se]"
               outline
+              :style="{'order': obj[i].orders[se]}"
               :items="obj[i].selects[se]">
             </v-select>
-           <h3 v-if="Object.keys(item.props.string).length > 0" style='margin-top: 30px;'>Однострочный текст без форматирования</h3>
             <v-text-field
               v-for="(elem, s) in item.props.string" :key="s + '-' + i"
               v-model="strings[obj[i].props.string[s]]"
-              :label="s">
+              :style="{'order': obj[i].hasOwnProperty('orders') && obj[i].orders.hasOwnProperty(s) ? obj[i].orders[s] : s}"
+              :label="obj[i].hasOwnProperty('placeholders') && obj[i].placeholders.hasOwnProperty(s) ? obj[i].placeholders[s] : s">
             </v-text-field>
-            <h3 v-if="Object.keys(item.props.editor).length > 0" style='margin-top: 30px;'>Текст с форматированием</h3>
             <editor v-for="(elem, e) in item.props.editor" :key="e + '-' + i"
-              v-model="strings[elem]">
+              v-model="strings[elem]"
+              :order="obj[i].hasOwnProperty('orders') && obj[i].orders.hasOwnProperty(e) ? obj[i].orders[e] : e"
+              :labels="obj[i].hasOwnProperty('placeholders') && obj[i].placeholders.hasOwnProperty(e) ? obj[i].placeholders[e] : e">
             </editor>
-            <h3 v-if="Object.keys(item.props.links).length > 0" style='margin-top: 30px;'>Ссылки</h3>
             <v-text-field
               v-for="(elem, l) in item.props.links" :key="l + '-' + i"
               v-model="obj[i].props.links[l]"
-              :label="l"/>
-            <h3 v-if="Object.keys(item.props.imgs).length > 0" style='margin-top: 30px;'>Картинки</h3>
-            <v-layout row wrap v-for="(elem, im) in item.props.imgs" :key="im + '-' + i">
+              :style="{'order': obj[i].hasOwnProperty('orders') && obj[i].orders.hasOwnProperty(l) ? obj[i].orders[l] : l}"
+              :label="obj[i].hasOwnProperty('placeholders') && obj[i].placeholders.hasOwnProperty(l) ? obj[i].placeholders[l] : l"/>
+            <v-layout row wrap v-for="(elem, im) in item.props.imgs" :key="im + '-' + i"
+              :style="{'order': obj[i].hasOwnProperty('orders') && obj[i].orders.hasOwnProperty(im) ? obj[i].orders[im] : im}">
               <v-flex xs8 sm10 md10>
                 <v-text-field 
                   disabled
                   v-model="obj[i].props.imgs[im]"
-                  :label="im"/>
+                  :label="obj[i].hasOwnProperty('placeholders') && obj[i].placeholders.hasOwnProperty(im) ? obj[i].placeholders[im] : im"/>
               </v-flex>
               <v-btn 
                 fab small dark color="green" 
                 @click="openDownload(i, im, size, false)">
                 <v-icon dark>add</v-icon>
+              </v-btn>
+              <v-btn 
+                fab small dark color="red" 
+                @click="obj[i].props.imgs[im] = ''">
+                <v-icon dark>close</v-icon>
               </v-btn>
             </v-layout>
           </v-card-text>

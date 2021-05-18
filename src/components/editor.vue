@@ -1,5 +1,6 @@
 <template>
-  <div class="editor">
+  <div class="editor u" :style="{'order': order}">
+    <p>{{labels}}</p>
     <editor-menu-bar :editor="editor" v-slot="{ commands, isActive }">
       <div class="menubar">
         <button
@@ -165,6 +166,12 @@ export default {
   props: {
     intext: {
       default: 'text',
+    },
+    labels: {
+      default: 's',
+    },
+    order: {
+      default: 0
     }
   },
   data() {

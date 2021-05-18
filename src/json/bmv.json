@@ -3,6 +3,15 @@
         "name": "bigimg",
         "edit": false,
         "id": "id",
+        "placeholders": {
+            "img": "Загрузка основной картинки",
+            "alt": "Название и описание картинки для поисковиков"
+        },
+        "orders": {
+            "img": "1",
+            "alt": "2"
+        },
+        "selects": {},
         "props": {
             "boolean": {
             },
@@ -14,6 +23,8 @@
             "imgs": {
                 "img": ""
             },
+            "custom": {},
+            "selects": {},
             "links": {
             }
         }
@@ -22,6 +33,23 @@
         "name": "imgsblock",
         "edit": false,
         "id": "id",
+        "selects": {},
+        "placeholders": {
+            "first_alt": "Название и описание первой картинки для поисковиков",
+            "second_alt": "Название и описание второй картинки для поисковиков",
+            "third_alt": "Название и описание третьей картинки для поисковиков",
+            "first_img": "Первая картинка (если не загружать, то ничего не покажется)",
+            "second_img": "Вторая картинка (если не загружать, то ничего не покажется)",
+            "third_img": "Третья картинка (если не загружать, то ничего не покажется)"
+        },
+        "orders": {
+            "first_alt": "2",
+            "second_alt": "4",
+            "third_alt": "6",
+            "first_img": "1",
+            "second_img": "3",
+            "third_img": "5"
+        },
         "props": {
             "boolean": {
             },
@@ -37,6 +65,8 @@
                 "second_img": "",
                 "third_img": ""
             },
+            "custom": {},
+            "selects": {},
             "links": {
             }
         }
@@ -48,9 +78,15 @@
         "selects": {
             "name_class": ["large", "big", "small", "last"]
         },
+        "placeholders": {
+            "name_class": "Высота отступа"
+        },
+        "orders": {
+            "name_class": "1",
+            "note": "0"
+        },
         "props": {
             "boolean": {
-                "note": false
             },
             "string": { 
             },
@@ -60,6 +96,7 @@
             },
             "links": {
             },
+            "custom": {},
             "selects": {
                 "name_class": "large"
             }
@@ -69,6 +106,13 @@
         "name": "title",
         "edit": false,
         "id": "id",
+        "selects": {},
+        "placeholders": {
+            "title": "Главный заголовок страницы (не больше одного на страницу, в html разметке выглядит как H1)"
+        },
+        "orders": {
+            "title": "1"
+        },
         "props": {
             "boolean": {
             },
@@ -79,6 +123,8 @@
             },
             "imgs": {
             },
+            "custom": {},
+            "selects": {},
             "links": {
             }
         }
@@ -87,6 +133,13 @@
         "name": "editor",
         "edit": false,
         "id": "id",
+        "selects": {},
+        "placeholders": {
+            "texts": "Большой текст со стилизацией"
+        },
+        "orders": {
+            "texts": "1"
+        },
         "props": {
             "boolean": {
             },
@@ -97,6 +150,8 @@
             },
             "imgs": {
             },
+            "custom": {},
+            "selects": {},
             "links": {
             }
         }
@@ -105,6 +160,13 @@
         "name": "contactus",
         "edit": false,
         "id": "id",
+        "selects": {},
+        "placeholders": {
+            "texts": "вкл - темный фон, выкл - светлый фон"
+        },
+        "orders": {
+            "texts": "1"
+        },
         "props": {
             "boolean": {
                 "pageBlock": true
@@ -115,6 +177,8 @@
             },
             "imgs": {
             },
+            "custom": {},
+            "selects": {},
             "links": {
             }
         }
