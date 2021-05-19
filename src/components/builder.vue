@@ -65,7 +65,7 @@
               :label="obj[i].hasOwnProperty('placeholders') && obj[i].placeholders.hasOwnProperty(b) ? obj[i].placeholders[b] : b"
               v-model="obj[i].props.boolean[b]">
             </v-switch>
-            <v-select v-for="(elem, se) in item.props.selects" :key="se" 
+            <v-select v-for="(elem, se) in item.props.selects" :key="se + '-' + i" 
               v-model="obj[i].props.selects[se]" 
               :label="obj[i].placeholders[se]"
               outline
@@ -88,6 +88,11 @@
               v-model="obj[i].props.links[l]"
               :style="{'order': obj[i].hasOwnProperty('orders') && obj[i].orders.hasOwnProperty(l) ? obj[i].orders[l] : l}"
               :label="obj[i].hasOwnProperty('placeholders') && obj[i].placeholders.hasOwnProperty(l) ? obj[i].placeholders[l] : l"/>
+            <v-text-field
+              v-for="(elem, cus) in item.props.custom" :key="cus + '-' + i"
+              v-model="obj[i].props.custom[cus]"
+              :style="{'order': obj[i].hasOwnProperty('orders') && obj[i].orders.hasOwnProperty(cus) ? obj[i].orders[cus] : cus}"
+              :label="obj[i].hasOwnProperty('placeholders') && obj[i].placeholders.hasOwnProperty(cus) ? obj[i].placeholders[cus] : cus"/>
             <v-layout row wrap v-for="(elem, im) in item.props.imgs" :key="im + '-' + i"
               :style="{'order': obj[i].hasOwnProperty('orders') && obj[i].orders.hasOwnProperty(im) ? obj[i].orders[im] : im}">
               <v-flex xs8 sm10 md10>
