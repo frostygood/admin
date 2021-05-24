@@ -82,8 +82,7 @@
             "name_class": "Высота отступа"
         },
         "orders": {
-            "name_class": "1",
-            "note": "0"
+            "name_class": "1"
         },
         "props": {
             "boolean": {

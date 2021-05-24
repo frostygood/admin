@@ -95,7 +95,10 @@ export default {
           id: obj.id,
           active: obj.active,
           page: obj.page,
-          strings: obj.strings
+          strings: obj.strings,
+          tags: {},
+          lock: obj.lock,
+          needTranslate: obj.needTranslate 
         }
       },
       delSpaceUrl() {
@@ -121,6 +124,9 @@ export default {
                 this.copiPage.img = doc.data().img
                 this.copiPage.id = ''
                 this.copiPage.active = false
+                this.copiPage.lock = false
+                this.copiPage.needTranslate = false
+                this.copiPage.tags = {}
                 this.copiPage.page = doc.data().page
                 this.copiPage.strings = doc.data().strings
 
@@ -142,8 +148,12 @@ export default {
         this.copiPage.img = ''
         this.copiPage.id = ''
         this.copiPage.active = false
+        this.copiPage.needTranslate = false
+        this.copiPage.lock = false
         this.copiPage.page = []
         this.copiPage.strings = {}
+        this.copiPage.tags = {}
+        
       }
     }
 }

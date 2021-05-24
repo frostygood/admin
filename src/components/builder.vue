@@ -10,7 +10,7 @@
           <v-text-field v-model="description" label="Description Page"></v-text-field>
           <div style="display: flex">
             <v-flex xs10 sm10 md10>
-              <v-text-field disabled v-model="img" label="Prev page (.jpg)"/>
+              <v-text-field disabled v-model="img" label="Превью картинка (.jpg)"/>
             </v-flex>
             <v-flex xs2 sm2 md2>
               <v-btn fab small dark color="green" @click="openDownload(null, null, 300, 'meta')">
@@ -25,6 +25,27 @@
               @change="delSpaceUrl()">
             </v-text-field>
           </div>
+          <v-switch
+              label="Скрыть страницу (режим черновика)"
+              v-model="active">
+          </v-switch>
+          <v-switch
+              label="Страница требует локализацию"
+              v-model="needTranslate">
+          </v-switch>
+          <v-switch
+              label="На странице запрещено вносить правки"
+              v-model="lock">
+          </v-switch>
+          <v-combobox
+            v-model="tags"
+            :items="Object.entries(tagsList).map(item => ({'id': item[0], 'name': item[1]}))"
+            label="Выбрать теги для страницы"
+            item-text='name'
+            item-value='id'
+            multiple
+            chips
+          ></v-combobox>
         </v-card-text>
       </v-card>
     </v-dialog>
@@ -61,8 +82,8 @@
           <v-card-text style="display: flex; flex-direction: column;">
             <v-switch v-for="(elem, b) in item.props.boolean" :key="b + '-' + i" 
               style="display: inline-block; margin-right: 30px;"
-              :style="{'order': obj[i].hasOwnProperty('orders') && obj[i].orders.hasOwnProperty(b) ? obj[i].orders[b] : b}"
-              :label="obj[i].hasOwnProperty('placeholders') && obj[i].placeholders.hasOwnProperty(b) ? obj[i].placeholders[b] : b"
+              :style="{'order': obj[i].orders.hasOwnProperty(b) ? obj[i].orders[b] : b}"
+              :label="obj[i].placeholders.hasOwnProperty(b) ? obj[i].placeholders[b] : b"
               v-model="obj[i].props.boolean[b]">
             </v-switch>
             <v-select v-for="(elem, se) in item.props.selects" :key="se + '-' + i" 
@@ -75,31 +96,31 @@
             <v-text-field
               v-for="(elem, s) in item.props.string" :key="s + '-' + i"
               v-model="strings[obj[i].props.string[s]]"
-              :style="{'order': obj[i].hasOwnProperty('orders') && obj[i].orders.hasOwnProperty(s) ? obj[i].orders[s] : s}"
-              :label="obj[i].hasOwnProperty('placeholders') && obj[i].placeholders.hasOwnProperty(s) ? obj[i].placeholders[s] : s">
+              :style="{'order': obj[i].orders.hasOwnProperty(s) ? obj[i].orders[s] : s}"
+              :label="obj[i].placeholders.hasOwnProperty(s) ? obj[i].placeholders[s] : s">
             </v-text-field>
             <editor v-for="(elem, e) in item.props.editor" :key="e + '-' + i"
               v-model="strings[elem]"
-              :order="obj[i].hasOwnProperty('orders') && obj[i].orders.hasOwnProperty(e) ? obj[i].orders[e] : e"
-              :labels="obj[i].hasOwnProperty('placeholders') && obj[i].placeholders.hasOwnProperty(e) ? obj[i].placeholders[e] : e">
+              :order="obj[i].orders.hasOwnProperty(e) ? obj[i].orders[e] : e"
+              :labels="obj[i].placeholders.hasOwnProperty(e) ? obj[i].placeholders[e] : e">
             </editor>
             <v-text-field
               v-for="(elem, l) in item.props.links" :key="l + '-' + i"
               v-model="obj[i].props.links[l]"
-              :style="{'order': obj[i].hasOwnProperty('orders') && obj[i].orders.hasOwnProperty(l) ? obj[i].orders[l] : l}"
-              :label="obj[i].hasOwnProperty('placeholders') && obj[i].placeholders.hasOwnProperty(l) ? obj[i].placeholders[l] : l"/>
+              :style="{'order': obj[i].orders.hasOwnProperty(l) ? obj[i].orders[l] : l}"
+              :label="obj[i].placeholders.hasOwnProperty(l) ? obj[i].placeholders[l] : l"/>
             <v-text-field
               v-for="(elem, cus) in item.props.custom" :key="cus + '-' + i"
               v-model="obj[i].props.custom[cus]"
-              :style="{'order': obj[i].hasOwnProperty('orders') && obj[i].orders.hasOwnProperty(cus) ? obj[i].orders[cus] : cus}"
-              :label="obj[i].hasOwnProperty('placeholders') && obj[i].placeholders.hasOwnProperty(cus) ? obj[i].placeholders[cus] : cus"/>
+              :style="{'order': obj[i].orders.hasOwnProperty(cus) ? obj[i].orders[cus] : cus}"
+              :label="obj[i].placeholders.hasOwnProperty(cus) ? obj[i].placeholders[cus] : cus"/>
             <v-layout row wrap v-for="(elem, im) in item.props.imgs" :key="im + '-' + i"
-              :style="{'order': obj[i].hasOwnProperty('orders') && obj[i].orders.hasOwnProperty(im) ? obj[i].orders[im] : im}">
+              :style="{'order': obj[i].orders.hasOwnProperty(im) ? obj[i].orders[im] : im}">
               <v-flex xs8 sm10 md10>
                 <v-text-field 
                   disabled
                   v-model="obj[i].props.imgs[im]"
-                  :label="obj[i].hasOwnProperty('placeholders') && obj[i].placeholders.hasOwnProperty(im) ? obj[i].placeholders[im] : im"/>
+                  :label="obj[i].placeholders.hasOwnProperty(im) ? obj[i].placeholders[im] : im"/>
               </v-flex>
               <v-btn 
                 fab small dark color="green" 
@@ -171,8 +192,13 @@ export default {
         path: '',
         startPath: '',
         title: '',
+        active: false,
+        lock: false,
+        needTranslate: false,
         description: '',
         img: '',
+        tags: [],
+        tagsList: {},
         uploadMetaImg: false,
         modalComponents: false,
         positionCreatingComponent: 0,
@@ -232,6 +258,10 @@ export default {
         description: this.description,
         img: this.img,
         id: this.id,
+        tags: this.tags,
+        active: this.active,
+        lock: this.lock,
+        needTranslate: this.needTranslate
       }
       await this.$db.collection(''+this.site).doc('collections').get().then((doc) => {
         console.log("Document data:", doc.data());
@@ -248,6 +278,16 @@ export default {
       })
     },
     async getPage() {
+      this.$db.collection(''+this.site).doc('tags').get().then((doc) => {
+          if (doc.exists) {
+              console.log("Document data:", doc.data());
+              this.tagsList = doc.data().tags
+          } else {
+              console.log("No such document!");
+          }
+      }).catch(function(error) {
+          console.log("Error getting document:", error);
+      });
       await this.$db.collection(''+this.site).doc(''+this.lang).collection(''+this.type).doc(""+this.id).get()
         .then((doc) => {
           if (doc.exists) {
@@ -259,6 +299,10 @@ export default {
               this.title = doc.data().title
               this.description = doc.data().description
               this.img = doc.data().img
+              this.tags = doc.data().tags
+              this.active = doc.data().active
+              this.lock = doc.data().lock,
+              this.needTranslate = doc.data().needTranslate
           } else {
               console.log("No such document!");
           }
