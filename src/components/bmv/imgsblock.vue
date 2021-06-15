@@ -8,6 +8,8 @@
 
 <script>
 	export default {
+		preview: "",
+        category: "For Pictures",
 		props: {
 			first_img: {
 				type: String,

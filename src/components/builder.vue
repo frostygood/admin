@@ -141,9 +141,15 @@
       <v-card>
         <v-toolbar card dark color="primary"><v-btn icon dark @click="modalComponents = false"><v-icon>close</v-icon></v-btn></v-toolbar>
         <v-card-text>
-          <div v-for="(item, i) in listComponents" :key="i">
-            <component :is='site + "-" +item.name'/>
-            <v-btn style="margin: 10px auto 30px; display: block;" @click="chooseComponent(item.name)">Выбрать</v-btn>
+          <div v-for="(list, l) in Object.keys(category)" :key="l"
+            class="list-select-components" :class="{'hide': category[l]}">
+              <span :click="category[l] = !category[l]">[-]</span>
+                <div v-for="(item, i) in listComponents.filter(elem => list == item.category)" 
+                  :key="i" class="select-components">
+                      <img v-if="item.preview" :src="item.preview" alt="" style="display: block;">
+                      <component v-else :is='site + "-" +item.name'/>
+                      <v-btn class="select-components__btn" style="margin: 10px auto 30px; display: block;" @click="chooseComponent(item.name)">Выбрать</v-btn>
+                </div>
           </div>
         </v-card-text>
       </v-card>
@@ -204,7 +210,8 @@ export default {
         positionCreatingComponent: 0,
         obj_i: '', 
         imgs_im: '',
-        size: 300
+        size: 300,
+        category: {}
       }
   },
   mounted() {
@@ -235,6 +242,9 @@ export default {
   methods: {
     getComponents() {
       this.listComponents = this.propListComponents
+      this.listComponents.forEach(element => {
+        if (!this.category.includes(element.category)) this.category[element.category] = false
+      });
     },
     openDownload(obj_i, imgs_im, size, meta) {
       this.modalDownload = true
@@ -393,6 +403,27 @@ export default {
     background: rgba(156, 38, 176, .7);
     & button {
       display: inline-block;
+    }
+  }
+}
+.list-select-components {
+  .hide {
+    overflow: hidden;
+    height: 0;
+  }
+}
+.select-components {
+  position: relative;
+  &__btn {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    opacity: 0;
+    transition: .2s;
+  }
+  &:hover{
+    .select-components__btn {
+      opacity: 1;
     }
   }
 }

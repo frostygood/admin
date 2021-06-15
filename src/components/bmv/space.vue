@@ -5,6 +5,8 @@
 
 <script>
 	export default {
+		preview: "",
+        category: "Blocks of page",
 		props: {
 			name_class: {
 				type: String,

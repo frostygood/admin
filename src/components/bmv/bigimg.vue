@@ -4,6 +4,8 @@
 
 <script>
 	export default {
+		preview: "",
+        category: "For Pictures",
 		props: {
 			img: {
 				type: String,

@@ -1,6 +1,8 @@
 [
     {
         "name": "bigimg",
+        "preview": "https://firebasestorage.googleapis.com/v0/b/bmven-a02bd.appspot.com/o/prev%2F%D0%A1%D0%BD%D0%B8%D0%BC%D0%BE%D0%BA%20%D1%8D%D0%BA%D1%80%D0%B0%D0%BD%D0%B0%202021-06-15%20%D0%B2%2017.54.06.png?alt=media&token=542702d3-ffab-4d03-8afe-ea6a8747343d",
+        "category": "For Pictures",
         "edit": false,
         "id": "id",
         "placeholders": {
@@ -31,6 +33,8 @@
     },
     {
         "name": "imgsblock",
+        "preview": "https://firebasestorage.googleapis.com/v0/b/bmven-a02bd.appspot.com/o/prev%2F%D0%A1%D0%BD%D0%B8%D0%BC%D0%BE%D0%BA%20%D1%8D%D0%BA%D1%80%D0%B0%D0%BD%D0%B0%202021-06-15%20%D0%B2%2017.54.14.png?alt=media&token=02532ad7-1fcf-466e-83d3-a18def63ac5c",
+        "category": "For Pictures",
         "edit": false,
         "id": "id",
         "selects": {},
@@ -74,6 +78,8 @@
     {
         "name": "space",
         "edit": false,
+        "preview": "https://firebasestorage.googleapis.com/v0/b/bmven-a02bd.appspot.com/o/prev%2F%D0%A1%D0%BD%D0%B8%D0%BC%D0%BE%D0%BA%20%D1%8D%D0%BA%D1%80%D0%B0%D0%BD%D0%B0%202021-06-15%20%D0%B2%2018.00.25.png?alt=media&token=70d4e09e-9132-433e-86d1-633ca382a5b6",
+        "category": "Blocks of page",
         "id": "id",
         "selects": {
             "name_class": ["large", "big", "small", "last"]
@@ -104,6 +110,8 @@
     {
         "name": "title",
         "edit": false,
+        "preview": "https://firebasestorage.googleapis.com/v0/b/bmven-a02bd.appspot.com/o/prev%2F%D0%A1%D0%BD%D0%B8%D0%BC%D0%BE%D0%BA%20%D1%8D%D0%BA%D1%80%D0%B0%D0%BD%D0%B0%202021-06-15%20%D0%B2%2017.53.52.png?alt=media&token=72e85b03-6e0c-4e02-b2dd-9b5da1ca217f",
+        "category": "Blocks of page",
         "id": "id",
         "selects": {},
         "placeholders": {
@@ -130,6 +138,8 @@
     },
     {
         "name": "editor",
+        "preview": "https://firebasestorage.googleapis.com/v0/b/bmven-a02bd.appspot.com/o/prev%2F%D0%A1%D0%BD%D0%B8%D0%BC%D0%BE%D0%BA%20%D1%8D%D0%BA%D1%80%D0%B0%D0%BD%D0%B0%202021-06-15%20%D0%B2%2018.04.20.png?alt=media&token=cf72990f-5a7c-401c-b7af-8693a7e40ac1",
+        "category": "Content in page",
         "edit": false,
         "id": "id",
         "selects": {},
@@ -157,6 +167,8 @@
     },
     {
         "name": "contactus",
+        "preview": "https://firebasestorage.googleapis.com/v0/b/bmven-a02bd.appspot.com/o/prev%2F%D0%A1%D0%BD%D0%B8%D0%BC%D0%BE%D0%BA%20%D1%8D%D0%BA%D1%80%D0%B0%D0%BD%D0%B0%202021-06-15%20%D0%B2%2017.54.39.png?alt=media&token=4d311e3c-b89c-492c-887b-7e720022d96e",
+        "category": "Blocks of page",
         "edit": false,
         "id": "id",
         "selects": {},

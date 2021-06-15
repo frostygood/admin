@@ -5,6 +5,8 @@
 </template>
 <script>
 	export default {
+		preview: "",
+        category: "Content in page",
 		props: {
 			texts: {
 				type: String,
