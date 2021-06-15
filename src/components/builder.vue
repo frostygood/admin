@@ -140,15 +140,14 @@
     <v-dialog v-model="modalComponents" max-width="900px" scrollable>
       <v-card>
         <v-toolbar card dark color="primary"><v-btn icon dark @click="modalComponents = false"><v-icon>close</v-icon></v-btn></v-toolbar>
-        <v-card-text>
-          <div v-for="(list, l) in Object.keys(category)" :key="l"
-            class="list-select-components" :class="{'hide': category[l]}">
-              <span :click="category[l] = !category[l]">[-]</span>
-                <div v-for="(item, i) in listComponents.filter(elem => list == item.category)" 
-                  :key="i" class="select-components">
-                      <img v-if="item.preview" :src="item.preview" alt="" style="display: block;">
+        <v-card-text v-if="listComponents">
+          <div v-for="(list, l) in Object.keys(category)" :key="l" >
+              <a href="#" @click.prevent="openListComponents(list)">{{list}} [-]</a>
+                <div v-for="(item, i) in filterComponents(list)" 
+                  :key="i" class="select-components list-select-components" :class="{'hide': !category[list]}">
+                      <img v-if="item.preview" :src="item.preview" alt="" style="display: block; width: 100%;">
                       <component v-else :is='site + "-" +item.name'/>
-                      <v-btn class="select-components__btn" style="margin: 10px auto 30px; display: block;" @click="chooseComponent(item.name)">Выбрать</v-btn>
+                      <v-btn class="select-components__btn" @click="chooseComponent(item.name)">Выбрать</v-btn>
                 </div>
           </div>
         </v-card-text>
@@ -243,7 +242,7 @@ export default {
     getComponents() {
       this.listComponents = this.propListComponents
       this.listComponents.forEach(element => {
-        if (!this.category.includes(element.category)) this.category[element.category] = false
+        if (!Object.keys(this.category).includes(element.category)) this.category[element.category+''] = false
       });
     },
     openDownload(obj_i, imgs_im, size, meta) {
@@ -372,6 +371,17 @@ export default {
         });
       })      
     },
+    openListComponents(list) {
+      console.log(list)
+      this.category[list] = !this.category[list]
+      console.log( this.category[list])
+      this.$forceUpdate()
+    },
+    filterComponents(list) {
+      console.log(list)
+      console.log(this.listComponents.filter(elem => elem.category == list))
+      return this.listComponents.filter(elem => elem.category == list)
+    }
   },
   components: {
     editor, 
@@ -406,18 +416,16 @@ export default {
     }
   }
 }
-.list-select-components {
-  .hide {
-    overflow: hidden;
-    height: 0;
-  }
-}
+
 .select-components {
   position: relative;
+  margin-bottom: 20px;
   &__btn {
     position: absolute;
     top: 50%;
     left: 50%;
+    transform: translate(-50%, -50%);
+    display: block;
     opacity: 0;
     transition: .2s;
   }
@@ -425,6 +433,16 @@ export default {
     .select-components__btn {
       opacity: 1;
     }
+    img {
+      filter: brightness(0.4);
+    }
+  }
+}
+.list-select-components {
+  &.hide {
+    overflow: hidden;
+    height: 0;
+    margin: 0;
   }
 }
 </style>
