@@ -47,10 +47,14 @@
           </v-select>
           <div style="display: flex; flex-direction: row;">
             <v-btn 
+              color="red" dark
+              @click.prevent='removeFunc(site, language, category, page, settings)'
+              v-if='site && language && category && page'>Удалить</v-btn>
+            <v-btn 
               style='margin-left: auto;'
               color="green" dark
               @click.prevent='actionFunc(site, language, category, page)'
-              v-if='site && language && category && page'>Edit this page</v-btn>
+              v-if='site && language && category && page'>Открыть</v-btn>
           </div>
         </v-card-text>
       </v-card>
@@ -68,6 +72,7 @@ export default {
         btn: {default: 'Choose page'},
         text: {default: 'Choose page (выбрать страницу для редактирования)'},
         funcOk: {type: Function},
+        funcRemove: {type: Function},
         funcCreate: {type: Function}
     },
     data() {
@@ -176,6 +181,14 @@ export default {
           this.modal = false
         }
         else console.log('не передана action функция')
+      },
+      removeFunc(site, lang, category, page, settings) {
+        if (this.funcOk) {
+          this.funcRemove(site, lang, category, page, settings)
+          this.getProps()
+          this.modal = false
+        }
+        else console.log('не передана remove функция')
       },
       createFunc(site, lang, category) {
         if (this.funcCreate) {

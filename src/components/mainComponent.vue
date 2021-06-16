@@ -3,6 +3,7 @@
     <choose 
       :prop-site='siteProp' 
       :func-ok='choosePage' 
+      :func-remove='removePage' 
       :func-create='openCreatePopup'/>
     <builder 
       :site='siteProp' 
@@ -70,6 +71,19 @@ export default {
       this.lang = lang
       this.type = type
       this.id = id
+    },
+    removePage(site, lang, type, id, settings) {
+      let isReady = confirm("Точно удалить эту страницу?");
+      if (isReady) {
+          let setItem = JSON.parse(JSON.stringify(settings))
+          delete setItem[lang][type][id]
+          console.log(setItem)
+
+          this.$db.collection(''+site).doc('collections').set(setItem).then(() => {
+              this.$db.collection(''+site).doc(''+lang).collection(''+type).doc(""+id).delete().then(() => alert('Страница удалена безвозвратно!'))
+          })
+      }
+      
     },
     openCreatePopup(settings, site, lang, category) {
       console.log(settings, site, lang, category)

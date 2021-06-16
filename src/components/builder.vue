@@ -372,13 +372,10 @@ export default {
       })      
     },
     openListComponents(list) {
-      console.log(list)
       this.category[list] = !this.category[list]
-      console.log( this.category[list])
       this.$forceUpdate()
     },
     filterComponents(list) {
-      console.log(list)
       console.log(this.listComponents.filter(elem => elem.category == list))
       return this.listComponents.filter(elem => elem.category == list)
     }
