@@ -54,7 +54,10 @@ export default {
               id: '',
               active: false,
               page: [],
-              strings: {}
+              strings: {},
+              tags: {},
+              lock: false,
+              needTranslate: false 
             }
         }
     },
@@ -75,7 +78,7 @@ export default {
           let setItem = JSON.parse(JSON.stringify(this.settings))
           setItem[lang][type][id] = path
 
-          console.log(item, setItem[lang][type])
+          //console.log(item, setItem[lang][type])
 
           this.$db.collection(''+site).doc(''+lang).collection(''+type).doc(""+id).set(item).then(() => {
             this.$db.collection(''+site).doc('collections').set(setItem).then(() => {
@@ -104,12 +107,12 @@ export default {
       delSpaceUrl() {
         let thisApp = this;
         this.path = this.path.replace(/[^\w\d]/g, '-').toLowerCase();
-        console.log(Object.values(this.settings[this.propLang][this.propCategory]))
+        //console.log(Object.values(this.settings[this.propLang][this.propCategory]))
         Object.values(this.settings[this.propLang][this.propCategory]).forEach(function(url) {
             if (url == thisApp.path) {
               alert('This url is already in use! / Такой url уже используется!');
               thisApp.path = thisApp.path + "_" + Date.now()
-            };
+            }
           });
       },
       async getPage() {
