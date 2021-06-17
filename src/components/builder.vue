@@ -37,7 +37,7 @@
               label="На странице запрещено вносить правки"
               v-model="lock">
           </v-switch>
-          <v-combobox
+          <!-- <v-combobox
             v-model="tags"
             :items="Object.entries(tagsList).map(item => ({'id': item[0], 'name': item[1]}))"
             label="Выбрать теги для страницы"
@@ -45,7 +45,7 @@
             item-value='id'
             multiple
             chips
-          ></v-combobox>
+          ></v-combobox> -->
         </v-card-text>
       </v-card>
     </v-dialog>
