@@ -198,10 +198,14 @@ export default {
           new Image(),
         ],
         content: this.intext,
+        disableInputRules: true,
         onUpdate: ({ getJSON, getHTML }) => {
           this.json = getJSON()
           this.html = getHTML()
-        }
+          if (this.html.substr(0, 3) == '<p>' && this.html.substr(-4) == '</p>') {
+             this.html = this.html.slice(3, -4)
+          }
+        },
       }),
       linkUrl: null,
       linkMenuIsActive: false,
