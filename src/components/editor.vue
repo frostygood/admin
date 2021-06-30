@@ -29,6 +29,12 @@
         </button>
         <button
           class="menubar__button"
+          :class="{ 'is-active': isActive.span21() }"
+          @click="commands.span21">
+          <span>{{'bg'}}</span>
+        </button>
+        <button
+          class="menubar__button"
           :class="{ 'is-active': isActive.code() }"
           @click="commands.code">
           <icon name="code" />
@@ -90,12 +96,12 @@
         >
           <icon name="redo" />
         </button>
-        <button
+        <!-- <button
           class="menubar__button"
           @click="showImagePrompt(commands.image)"
         >
           <icon name="image" />
-        </button>
+        </button> -->
         <editor-menu-bubble class="menububble" :editor="editor" @hide="hideLinkMenu" v-slot="{ commands, isActive, getMarkAttrs, menu }">
           <div
             class="menububble"
@@ -131,7 +137,9 @@
 
 <script>
 import Icon from '@/components/icon'
-import { Editor, EditorContent, EditorMenuBubble, EditorMenuBar } from 'tiptap'
+import { Editor, EditorContent, EditorMenuBubble, EditorMenuBar} from 'tiptap'
+//import Paragraph from './paradiv.js'
+import Span21 from './paragraf.js'
 import {
   Image,
   Blockquote,
@@ -178,6 +186,9 @@ export default {
     return {
       editor: new Editor({
         extensions: [
+          // new Doc(),
+          // new Text(),
+          // new Paragraph(),
           new Blockquote(),
           new BulletList(),
           new CodeBlock(),
@@ -196,15 +207,14 @@ export default {
           new Underline(),
           new History(),
           new Image(),
+          new Span21()
         ],
         content: this.intext,
         disableInputRules: true,
+        // useBuiltInExtensions: false,
         onUpdate: ({ getJSON, getHTML }) => {
           this.json = getJSON()
           this.html = getHTML()
-          if (this.html.substr(0, 3) == '<p>' && this.html.substr(-4) == '</p>') {
-             this.html = this.html.slice(3, -4)
-          }
         },
       }),
       linkUrl: null,
