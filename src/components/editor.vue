@@ -330,6 +330,10 @@ export default {
       }
     }
 
+    .colored-bg {
+      background-color: violet;
+    }
+
     p code {
       display: inline-block;
       padding: 0 0.4rem;
