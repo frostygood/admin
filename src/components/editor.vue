@@ -52,6 +52,11 @@
         </button>
         <button
           class="menubar__button"
+          :class="{ 'is-active': isActive.heading({ level: 4 }) }"
+          @click="commands.heading({ level: 4 })">H4
+        </button>
+        <button
+          class="menubar__button"
           :class="{ 'is-active': isActive.bullet_list() }"
           @click="commands.bullet_list">
           <icon name="ul" />
@@ -193,7 +198,7 @@ export default {
           new BulletList(),
           new CodeBlock(),
           new HardBreak(),
-          new Heading({ levels: [2, 3] }),
+          new Heading({ levels: [2, 3, 4] }),
           new HorizontalRule(),
           new ListItem(),
           new OrderedList(),
