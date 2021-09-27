@@ -1,22 +1,28 @@
 <template>
 <v-dialog v-model="opening" max-width="900px" scrollable>
-  <v-card>
-    <v-toolbar card dark color="primary">
-      <v-btn icon dark @click="$emit('opening-switched', false)">
-        <v-icon>close</v-icon>
-      </v-btn> 
-      Загрузка изображения
-    </v-toolbar>
-    <v-card-text>
-      <form v-on:submit.prevent id="formFiles" action="">
-        <input type="file" id="uploadImg" accept="image/*" @change="processFile($event)">
-        <p>Only .jpg and .png files, size &lt; {{size}}кб</p>
-      </form>
-      <img :src="urlFirebase" alt="" style="max-width: 500px;">
-      <v-text-field :value="'/_vue_builder/' + url"  readonly  disabled></v-text-field>
-    </v-card-text>
-    <v-btn v-if='url' @click="saveUrl()">OK</v-btn>
-  </v-card>
+    <v-card>
+      <v-toolbar card dark color="primary">
+        <v-btn icon dark @click="$emit('opening-switched', false)">
+          <v-icon>close</v-icon>
+        </v-btn> 
+        Загрузка изображения
+      </v-toolbar>
+      <v-card-text>
+        <form v-on:submit.prevent id="formFiles" action="">
+          <input type="file" id="uploadImg" accept="image/*" @change="processFile($event)">
+          <p>Only .jpg and .png files, size &lt; {{size}}кб</p>
+        </form>
+        <img :src="urlFirebase" alt="" style="max-width: 350px; max-height: 250px;">
+        <v-text-field :value="'/_vue_builder/' + url"  readonly  disabled></v-text-field>
+        <div class="list-pict">
+          <a @click.prevent="chooseImg(item.url, item.fb)" href="" v-for="(item, i) in listFiles" :key="i">
+            <img :src="item.fb" alt="">
+          </a>
+        </div>
+      </v-card-text>
+      
+      <v-btn v-if='url' @click="saveUrl()">OK</v-btn>
+    </v-card>
 </v-dialog>
 </template>
 
@@ -43,8 +49,21 @@ export default {
             progress: 0,
             file: null,
             url: '',
-            urlFirebase: ''
+            urlFirebase: '',
+            listFiles: []
         }
+    },
+    created() {
+      this.$storageRef.child('bmv').listAll().then((res) => {
+        res.items.forEach((itemRef) => {
+          this.listFiles.push({
+            'fb': 'https://firebasestorage.googleapis.com/v0/b/' + itemRef.location.bucket + '/o/' + itemRef.location.path_.split('/')[0] + '%2F' + itemRef.location.path_.split('/')[1] + '?alt=media',
+            'url': itemRef.location.path_.split('/')[1]
+          })
+        });
+      }).catch((error) => {
+        console.log(error)
+      });
     },
     methods: {
       saveUrl() {
@@ -106,11 +125,29 @@ export default {
             });
           }
         );
+      },
+      chooseImg(url, fb) {
+        this.url = url
+        this.urlFirebase = fb
       }
-    }
+    },
 }
 </script>
 
-<style>
-
+<style scoped>
+.list-pict{
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  flex-direction: row;
+  max-height: 300px;
+  overflow: scroll;
+}
+.list-pict a{
+  flex: 0 0 23%;
+  margin-bottom: 6px;
+}
+.list-pict a img {
+  width: 100%;
+}
 </style>
