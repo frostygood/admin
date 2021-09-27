@@ -16,12 +16,12 @@
         <v-text-field :value="'/_vue_builder/' + url"  readonly  disabled></v-text-field>
         <div class="list-pict">
           <a @click.prevent="chooseImg(item.url, item.fb)" href="" v-for="(item, i) in listFiles" :key="i">
-            <img :src="item.fb" alt="">
+            <img :src="item.fb" alt="" loading="lazy" async="true">
           </a>
         </div>
       </v-card-text>
       
-      <v-btn v-if='url' @click="saveUrl()">OK</v-btn>
+      <v-btn class="green" v-if='url' @click="saveUrl()">OK</v-btn>
     </v-card>
 </v-dialog>
 </template>
