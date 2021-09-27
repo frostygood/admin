@@ -54,7 +54,7 @@ export default {
         }
     },
     created() {
-      this.$storageRef.child('bmv').listAll().then((res) => {
+      this.$storageRef.child(this.site).listAll().then((res) => {
         res.items.forEach((itemRef) => {
           this.listFiles.push({
             'fb': 'https://firebasestorage.googleapis.com/v0/b/' + itemRef.location.bucket + '/o/' + itemRef.location.path_.split('/')[0] + '%2F' + itemRef.location.path_.split('/')[1] + '?alt=media',
