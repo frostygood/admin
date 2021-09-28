@@ -49,28 +49,39 @@
         </v-card-text>
       </v-card>
     </v-dialog>
-    <div v-for='(item, i) in obj' :key='i' class="component-wrapper">
+    <div v-for='(item, i) in obj' :key='i' class="component-wrapper" style="min-height: 50px;">
       <wrapper :strings='strings' :obj='item' :site='site' :filestore='filestore'/>
       <div class="component-overlay">
+        <p style="position: absolute; top: 10px; width: 100%; text-align: center; color: white;">{{item.category || 'legacy'}} -> {{item.name}}</p>
         <v-btn fab small dark color="orange" 
           style="position: absolute; bottom: -20px; z-index: 2;"
-          @click.prevent="openChooseComponentModal(i)">
+          @click.prevent="openChooseComponentModal(i)"
+          title="создать новый компонент ниже">
             <v-icon dark>add</v-icon>
         </v-btn>
         <v-btn fab small dark color="green" 
-          @click.prevent="obj[i].edit = true">
+          @click.prevent="obj[i].edit = true"
+          title="редактировать компонент">
             <v-icon dark>mode_edit</v-icon>
         </v-btn>
+        <v-btn fab small dark color="green" 
+          @click.prevent="copyComponent(item, i)"
+          title="копировать компонент">
+            <v-icon dark>content_copy</v-icon>
+        </v-btn>
         <v-btn fab v-show="i > 0" small dark color="blue" 
-          @click.prevent="switchComponents(i-1, i)">
+          @click.prevent="switchComponents(i-1, i)"
+          title="переместить выше">
             <v-icon dark>keyboard_arrow_up</v-icon>
         </v-btn>
         <v-btn fab v-show="obj.length-1 > i" small dark color="blue" 
-          @click.prevent="switchComponents(i, i+1)">
+          @click.prevent="switchComponents(i, i+1)"
+          title="переместить выше">
             <v-icon dark>keyboard_arrow_down</v-icon>
         </v-btn>
         <v-btn fab small dark color="error" 
           style="margin-left: auto;" 
+          title="удалить компонент"
           @click.prevent='deleteComponent(i)'>
             <v-icon dark>close</v-icon>
         </v-btn>
@@ -239,6 +250,10 @@ export default {
     },
   },
   methods: {
+    copyComponent(item, i) {
+      //console.log(item, i)
+      this.obj.splice(i, 0, item)
+    },
     getComponents() {
       this.listComponents = this.propListComponents
       this.listComponents.forEach(element => {
@@ -406,9 +421,15 @@ export default {
   & button {
     display: none;
   }
+  & p {
+    display: none;
+  }
   &:hover, &:focus {
     background: rgba(156, 38, 176, .7);
     & button {
+      display: inline-block;
+    }
+    & p {
       display: inline-block;
     }
   }
