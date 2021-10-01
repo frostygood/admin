@@ -71,12 +71,12 @@
         </v-btn>
         <v-btn fab v-show="i > 0" small dark color="blue" 
           @click.prevent="switchComponents(i-1, i)"
-          title="переместить выше">
+          title="переместить вверх">
             <v-icon dark>keyboard_arrow_up</v-icon>
         </v-btn>
         <v-btn fab v-show="obj.length-1 > i" small dark color="blue" 
           @click.prevent="switchComponents(i, i+1)"
-          title="переместить выше">
+          title="переместить вниз">
             <v-icon dark>keyboard_arrow_down</v-icon>
         </v-btn>
         <v-btn fab small dark color="error" 
@@ -251,8 +251,18 @@ export default {
   },
   methods: {
     copyComponent(item, i) {
-      //console.log(item, i)
-      this.obj.splice(i, 0, item)
+      let idComponent = item.name + Date.now()
+      let addingComponent = JSON.parse(JSON.stringify(item))
+      addingComponent['id'] = idComponent
+      for (let key in addingComponent.props.string) {
+        this.strings[idComponent + '_string_' + key] = this.strings[addingComponent.props.string[key]]
+        addingComponent.props.string[key] = idComponent + '_string_' + key
+      }
+      for (let key in addingComponent.props.editor) {
+        this.strings[idComponent + '_editor_' + key] = this.strings[addingComponent.props.editor[key]]
+        addingComponent.props.editor[key] = idComponent + '_editor_' + key
+      }
+      this.obj.splice(i, 0, addingComponent)
     },
     getComponents() {
       this.listComponents = this.propListComponents
@@ -288,17 +298,18 @@ export default {
         needTranslate: this.needTranslate
       }
       await this.$db.collection(''+this.site).doc('collections').get().then((doc) => {
-        console.log("Document data:", doc.data());
+        //console.log("Document data:", doc.data());
         this.settings = doc.data()
 
         let setItem = JSON.parse(JSON.stringify(this.settings))
         setItem[this.lang][this.type][this.id] = this.path
 
+        console.log(item)
         this.$db.collection(''+this.site).doc(''+this.lang).collection(''+this.type).doc(""+this.id).set(item).then(() => {
           this.$db.collection(''+this.site).doc('collections').set(setItem).then(() => {
               alert("Сохранено")
             })
-        });
+        }).catch((error) => console.log(error))
       })
     },
     async getPage() {
