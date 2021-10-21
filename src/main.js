@@ -7,7 +7,6 @@ import 'vuetify/dist/vuetify.min.css'
 import firebaseConfig from '../config/firebase.js'
 import firebase from 'firebase'
 
-import jsonBmv from '/src/json/bmv.json'
 
 Vue.use(Vuetify)
 
@@ -31,7 +30,6 @@ const ComponentContext = require.context('./components/bmv/', true, /\.vue$/i);
 ComponentContext.keys().forEach((componentFilePath) => { 
   let componentName = componentFilePath.split('/').pop().split('.')[0];
   Vue.component('bmv-' + componentName, () => import('../src/components/bmv/'+componentName+'.vue'))
-  Vue.component('bmv-' + componentName.replace(/-./g, x=>x.toUpperCase()[1]), () => import('../src/components/bmv/'+componentName+'.vue'))
 });
 
 ComponentContext.keys().map(ComponentContext).forEach((FilePath) => { 

@@ -1,11 +1,12 @@
 <template>
-	<img class="big_img" v-if="img" decoding="async" loading="lazy"  :src="img" :alt="alt">
+	<img class="big_img" v-if="img" decoding="async" loading="lazy" :src="img" :alt="alt">
 </template>
 
 <script>
 	export default {
 		preview: "",
         category: "For Pictures",
+		name: "bigimg",
 		props: {
 			img: {
 				type: String,
@@ -27,7 +28,9 @@
 
 <style lang="scss" scoped>
 .big_img {
-	height: 400px;
-	display: block;  
+	max-height: 400px;
+	display: block;
+	max-width: 100%;
+	min-height: 180px;
 }
 </style>

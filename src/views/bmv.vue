@@ -1,6 +1,6 @@
 <template>
 <div class='wrapper'>
-  <main-component site-prop='bmv' :list-components='json' filestore="https://firebasestorage.googleapis.com/v0/b/bmven-a02bd.appspot.com/o/bmv%2F"/>
+  <main-component site-prop='bmv' :list-components='listComponents' filestore="https://firebasestorage.googleapis.com/v0/b/bmven-a02bd.appspot.com/o/bmv%2F"/>
 </div>
 </template>
 
@@ -11,11 +11,11 @@ import mainComponent from '@/components/mainComponent.vue'
 export default {
   data() {
     return {
-      json: json
+		json: json,
+		listComponents: this.$arr
     }
   },
   created() {
-    console.log(json)
   },
   components: {
       mainComponent

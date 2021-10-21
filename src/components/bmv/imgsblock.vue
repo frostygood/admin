@@ -10,6 +10,7 @@
 	export default {
 		preview: "",
         category: "For Pictures",
+		name: "imgsblock",
 		props: {
 			first_img: {
 				type: String,
@@ -59,7 +60,8 @@
 
 <style lang="scss" scoped>
 .block_imgs img {
-	height: 230px;
+	max-height: 230px;
 	display: inline-block;  
+	max-width: 100%;
 }
 </style>

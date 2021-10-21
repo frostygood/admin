@@ -7,16 +7,15 @@
 	export default {
 		preview: "",
         category: "Blocks of page",
+		name: "space",
 		props: {
 			name_class: {
 				type: String,
 				default: 'large',
 				type_admin: "selects",
 				selects: ["large", "big", "small", "last"],
-				placeholder: "Высота отступа"
-			},
-			note: {
-				type: Boolean
+				placeholder: "Высота отступа",
+				order: 1
 			}
 		},
 	};
