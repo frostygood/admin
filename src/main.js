@@ -24,13 +24,54 @@ Vue.prototype.$storageRef = firebase.storage().ref();
 Vue.prototype.$firebase = firebase;
 
 
-jsonBmv.forEach(item => {
-  Vue.component(
-    'bmv-' + item.name,
-    () => import('../src/components/bmv/' + item.name + '.vue')
-  )  
-})
+Vue.prototype.$arr = []
 
+const ComponentContext = require.context('./components/bmv/', true, /\.vue$/i);
+
+ComponentContext.keys().forEach((componentFilePath) => { 
+  let componentName = componentFilePath.split('/').pop().split('.')[0];
+  Vue.component('bmv-' + componentName, () => import('../src/components/bmv/'+componentName+'.vue'))
+  Vue.component('bmv-' + componentName.replace(/-./g, x=>x.toUpperCase()[1]), () => import('../src/components/bmv/'+componentName+'.vue'))
+});
+
+ComponentContext.keys().map(ComponentContext).forEach((FilePath) => { 
+  let placeholders = {};
+  let order = {};
+  let selects = {};
+  let props = {
+    boolean: {},
+    string: {},
+    editor: {},
+    imgs: {},
+    links: {},
+    custom: {},
+    selects: {}
+  };
+  Object.keys(FilePath.default.props).forEach(el => {
+    order[el] = FilePath.default.props[el].order;
+    placeholders[el] = FilePath.default.props[el].placeholder;
+    if (FilePath.default.props[el].selects) selects[el] = FilePath.default.props[el].selects;
+    if (FilePath.default.props[el].type_admin == 'boolean') props.boolean[el] = FilePath.default.props[el].default
+    if (FilePath.default.props[el].type_admin == 'string') props.string[el] = FilePath.default.props[el].default
+    if (FilePath.default.props[el].type_admin == 'editor') props.editor[el] = FilePath.default.props[el].default
+    if (FilePath.default.props[el].type_admin == 'imgs') props.imgs[el] = FilePath.default.props[el].default
+    if (FilePath.default.props[el].type_admin == 'links') props.links[el] = FilePath.default.props[el].default
+    if (FilePath.default.props[el].type_admin == 'custom') props.custom[el] = FilePath.default.props[el].default
+    if (FilePath.default.props[el].type_admin == 'selects') props.selects[el] = FilePath.default.props[el].default
+  });
+  Vue.prototype.$arr.push({
+    name: FilePath.default.name,
+    category: FilePath.default.category,
+    preview: FilePath.default.preview,
+    edit: false,
+    id: 'id',
+    placeholders: placeholders,
+    orders: order,
+    selects: selects,
+    props: props,
+    data: FilePath.default.props
+  })
+});
 
 new Vue({
   router,

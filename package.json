@@ -29,7 +29,8 @@
     "eslint-plugin-vue": "^5.0.0",
     "node-sass": "^5.0.0",
     "sass-loader": "^10.1.1",
-    "vue-template-compiler": "^2.6.10"
+    "vue-template-compiler": "^2.6.10",
+    "firebase-admin": "^8.9.2"
   },
   "eslintConfig": {
     "root": true,
